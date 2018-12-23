@@ -1,52 +1,94 @@
 #include <type_traits>
 
 /*
-   "function_traits.hpp" : function signature and qualifier traits
+   "function_traits.hpp": function signature and qualifier traits
     ^^^^^^^^^^^^^^^^^^^
-    This header defines template 'trait-class' function<F> providing
-    member types and predicates for properties of the function type F;
-    its return type, parameter types, existence of variadic parameter
-    pack (trailing ellipsis ...), function cvref qualifiers and its
-    noexcept specifier (part of the function type since C++17).
-    Global/namespace traits are also provided for each member trait.
-    Some traits are only provided as global traits (to avoid bloat).
+        Type trait: A compile-time template-based interface to
+                      query or modify the properties of types.
 
-    The function 'signature' is its return type R and parameters P...
-    (with optional C-style varargs) without qualifiers or noexcept:
+    This header provides traits for C++ function types:
 
-    R(P...) or R(P...,...) is the 'base' function signature
-    
-      function<F>::signature_t     member trait
-      function_signature_t<F>      global trait 'standalone'
+      - Function signature:  R(P...) or R(P..., ...)
+          - Return type      R
+          - Parameter types    P...
+          - Presence of variadic parameter pack ...
+            ...C-style trailing elipsis: 2 combinations
 
-      function<F>::set_signature_t<r(p...[,...])>
+      - Function cvref qualifiers       12 combinations total:
+          - cv:  const and/or volatile   4 combinations
+          - ref: lvalue & or rvalue &&  x3 combinations
 
-    To preserve the noexcept specification, use 'remove_cvref':
+      - Function exception specification:
+         - noexcept: true or false       2 combinations
 
-      function_remove_cvref_t<F>
+    Function 'signature' here refers to return type R and parameters P...
+    (with optional C-style varargs but without qualifiers and noexcept):
 
-    The following set_* traits take bool template arguments:
+      function_signature_t<F> // removes cvref qualifiers and noexcept
 
-      set_const<C>
-      set_volatile<V>
-      set_cv<C,V>
-      set_noexcept<N>
-      set_variadic<A>
+    Function types with cvref qualifiers are 'abominable' (see doc refs).
+    To test if function type F is cvref qualified use predicate trait:
 
-      set_reference<Ref>  (ref_qual_v Ref lvalue-reference, rvalue-reference
-      set_cvref<C,V,Ref>   with L,R constrained to not both be true)
+      function_is_cvref_v<F> // true if any c,v or ref qualifier present
+
+    This library follows std trait conventions:
+
+      '_t' suffix for result type   (the trait is a type alias template)
+      '_v' suffix for result value  (the trait is a variable template)
+       no suffix for a result class (the trait is a class template
+                                     with 'type' or 'value' member)
+    e.g. no suffix:
+      function_is_cvref<F> // class inherited from std::bool_constant<?>
+
+    Conventional 'add' and 'remove' traits mutate their named trait:
+
+      function_add_noexcept_t<F> // add noexcept specifier
+      function_remove_cvref_t<F> // remove all cv and ref qualifiers
+                                 // leaving signature and exception spec
+
+    Unconventionally, this library also provides transforming / mutating
+    'set' traits that take extra template arguments:
+
+      function_set_noexcept_t<F,B>  // set noexcept(B) for bool const B
+      function_set_signature_t<F,S> // set S as the function signature
+                                    // keeping cvref-nx of function F
+
+    These 'set' traits allow to copy properties between function types.
+
+    Reference qualifiers are represented by an of enum type ref_qual_v:
+      - ref_qual_v{}  no reference qualifier (default)
+      - lval_ref_v    lvalue reference qualifier: &
+      - rval_ref_v    rvalue reference qualifier: &&
+
+      function_set_reference<F> // == function_remove_reference<F>
+
+      function_set_reference<F, lval_ref_v> // set ref qual to &
+      function_set_reference_lvalue<F>      // set ref qual to &
+
+    Template function reference_v<T> returns the reference type of T:
+
+      reference_v<T>() -> ref_qual_v
+
+    Copying all cvref qualifiers is verbose with 'set_cvref' so this is
+    provided as a 'set_cvref_as' trait:
+
+      function_set_cvref_as_t<F,G> // copy cvref quals of G to F
 
 
-    Conventional add_* and remove_* traits are provided as globals only:
-      function_add_const<F>
-      function_add_noexcept<F>
-      function_remove_variadic<F>
+  function<F>: class containing traits of function type F as members
+  ===========
+    Template 'trait class' function<F> implements traits as members.
+    It is exposed to the user, not hidden as an implementation detail,
+    because it offers an alternative interface.
 
-    Some further examples of global traits and equivalent member-traits:
-      function_return_type_t<F>     typename function<F>::return_type_t
-      function_set_const<F,true>    typename function<F>::set_const<true>
-      function_is_const<F>          typename function<F>::is_const
-      function_is_const_v<F>        function<F>::is_const()
+    Examples of global traits and their equivalent 'member' traits:
+
+      function_is_const_v<F>    function<F>::is_const()
+      function_is_const<F>      typename function<F>::is_const
+      function_return_type_t<F> typename function<F>::return_type_t
+      function_set_const<F,?>   typename function<F>::template set_const<?>
+
+    Note the disambiguating 'typename' and 'template' keywords.
 
     Note: MSVC may need __cdecl for varargs (untested)
 */
@@ -100,7 +142,6 @@ struct function_quals
   using is_cv = std::bool_constant<c||v>;
   using is_reference = std::bool_constant<ref>;
   using is_cvref = std::bool_constant<c||v||ref>;
-  using is_qualified = std::bool_constant<c||v||ref||nx>;
 
   template <bool C>
     using set_const_t = set_quals_t<C,v,ref,nx>;
@@ -253,7 +294,6 @@ X(const) X(volatile) X(cv)\
 X(reference) X(lvalue_reference) X(rvalue_reference)\
 X(cvref)\
 X(noexcept)\
-X(qualified)\
 X(variadic)
 
 #define X(QUAL) \

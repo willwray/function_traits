@@ -6,7 +6,7 @@
 ----
 <details><summary>Copyright &copy; 2018 Will Wray. Distributed under the Boost Software License, Version 1.0.</summary>
 
-### Boost Software License - Version 1.0 - August 17th, 2003
+### <b>Boost Software License - Version 1.0 - August 17th, 2003
 ```
 Permission is hereby granted, free of charge, to any person or organization
 obtaining a copy of the software and accompanying documentation covered by
@@ -31,13 +31,13 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 ```
 (Also at http://www.boost.org/LICENSE_1_0.txt or in accompanying file [LICENSE.md](LICENSE.md))
-
+</b>
 </details>
 <hr>
 
 <details><summary style="display:inline"><b>Background</b>: P0172R0 Abominable Function Types</summary>
 
->**C++ function types** are the types of plain old C/C++ functions:
+><b>**C++ function types** are the types of plain old C/C++ functions:
 <br>e.g.: ` void(), int(), void(int), int(char const*,...)`
 >
 >C++ function types can also have cvref qualifiers or noexcept specifier:
@@ -61,13 +61,13 @@ Quoting from [P0172R0](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p
 <br>despite appearances, is neither a const nor a volatile qualified type. <br>There is no such thing as a cv-qualified function type in the type system, <br>and the abominable function type is something else entirely.
 
 * P0172R0 **Abominable Function Types** by Alisdair Meredith, Nov 2015
-</details>
+</b></details>
 
 
 
 <details><summary style="display:inline"><b>Introduction</b>: A complete set of function traits</summary>
 
->This library provides traits for properties of function types in C++17 and on.
+><b>This library provides traits for properties of function types in C++17 and on.
 <br>The purpose of the library is to access function signatures and test / set qualifiers.
 <br>It is a low level library mostly for writing higher level libraries that touch functions.
 >
@@ -75,22 +75,21 @@ Quoting from [P0172R0](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p
 <br>support general Callable types. It is a robust, reviewed library for production use.
 >
 >This library doesn't provide Callable traits, just a complete set of function traits.
-<br>It is an experimental design using some C++2a features.
+<br>It is an experimental design using some C++2a features.</b>
 </details>
-
 
 <details><summary style="display:inline"><b>Motivation</b>: Provide the 48 signature specializations</summary>
 
 See also [Boost.CallableTraits Motivation](https://www.boost.org/doc/libs/develop/libs/callable_traits/doc/html/index.html#callable_traits.introduction.motivation)
 
->There are 48 function signature specializations required since C++17:
+><b>There are 48 function signature specializations required since C++17:</b>
 - 12 combinations of cvref qualifiers (4 cv x 3 ref)
 - x 2 for possible trailing elipsis (C-style varargs ...)
 - x 2 for `noexcept` - part of the function type since C++17.
 >
->I wanted a trait to copy qualifiers from source to target function types*.
+><b>I wanted a trait to copy qualifiers from source to target function types*.
 <br>Since all 48 specializations are needed to implement *any* function trait
-<br>with full generality, one might as well write a full collection of traits.
+<br>with full generality, one might as well write a full collection of traits.</b>
 
 (*) Copy traits<blockquote><p>See [P1016R0](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1016r0.pdf) 'A few additional type manipulation utilities' `copy_*` & `clone_*` traits.
 <br>Such traits were not proposed in P0172R0 nor implemented yet in Boost.CallableTraits
@@ -163,7 +162,7 @@ template<class R, class... P> struct fun<R(P..., ...) const volatile && noexcept
 
 - <details><summary style="display:inline"><b>Forward looking</b>: to concepts - down with SFINAE!</summary><blockquote><p>Look towards concepts and contraints with no need for SFINAE tricks<br>No concern for backward <b>compatibility</b> or support of old compilers<br><b>Diverge</b> from the P0172R0 suggested interface as appropriate<br>A clean, modern implementation (macro use internally).</p></blockquote></details>
 
-<h3 style="display:inline"><b>. Non Aims</b>: standard, supported, production-ready</h3>
+<b>. Non Aims</b>: standard, supported, production-ready
 
 >This is a niche library not meant to be a `std` proposal.
 </details>
@@ -175,24 +174,24 @@ template<class R, class... P> struct fun<R(P..., ...) const volatile && noexcept
 <br>For non-function type `T`, `function<T>` is an incomplete class type.
 >
 >**Member traits** of `function<F>` are a convenient interface for most use cases:
->```C++
->    #include <ltl/function_trait_class> // member traits only
->    static_assert( std::is_void_v<
->                       ltl::function<void()>::return_type_t >);
->    static_assert( not ltl::function<void()>::is_noexcept() );
->```
+```C++
+    #include <ltl/function_trait_class> // member traits only
+    static_assert( std::is_void_v<
+                       ltl::function<void()>::return_type_t >);
+    static_assert( not ltl::function<void()>::is_noexcept() );
+```
 >Member types need `typename` to disambiguate them as types in some cases:
->```c++
->    using R = typename ltl::function<void()>::return_type_t;
->```
+```c++
+    using R = typename ltl::function<void()>::return_type_t;
+```
 >(`typename` will be needed in fewer cases once we have [P0634](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0634r3.html) 'Down with typename!')
 <br>**Global traits** are defined in a separate header (that includes function_trait_class):
->```c++
->    #include <ltl/function_traits> // member and global traits 
->    static_assert( std::is_void_v<
->                       ltl::function_return_type_t<void()> >);
->    static_assert( not ltl::function_is_noexcept_v<void()> );
->```
+```c++
+    #include <ltl/function_traits> // member and global traits 
+    static_assert( std::is_void_v<
+                       ltl::function_return_type_t<void()> >);
+    static_assert( not ltl::function_is_noexcept_v<void()> );
+```
 >Global or namespace-scope traits are conventional for `std` traits etc.
 <br>Global traits act as template 'type functions' so work well in generic code.
 </details>
@@ -200,31 +199,31 @@ template<class R, class... P> struct fun<R(P..., ...) const volatile && noexcept
 
 <details><summary style="display:inline"><b>Examples 2</b>: Set traits vs add / remove traits</summary>
 
->`set_*` traits are more programmatic than conventional `add_*`, `remove_*` traits.
+><b>`set_*` traits are more programmatic than conventional `add_*`, `remove_*` traits.
 <br>Setters for cv qualifiers, noexcept and variadic take `bool` template arguments,
 <br>Setters for ref qualifiers take `ltl::ref_qual_v` template arguments:
->```c++
->    using namespace ltl;
->    static_assert( function_is_noexcept_v<
->                     function<void()>::set_noexcept_t<true> >);
->```
->Other setters take type arguments, e.g. to change function signature types:
->```c++
->    static_assert( std::is_same_v< void(),
->                     function<int()>::set_return_type_t<void> >);
->```
+```c++
+    using namespace ltl;
+    static_assert( function_is_noexcept_v<
+                     function<void()>::set_noexcept_t<true> >);
+```
+Other setters take type arguments, e.g. to change function signature types:
+```c++
+    static_assert( std::is_same_v< void(),
+                     function<int()>::set_return_type_t<void> >);
+```
 >`set_*_as` traits provide a way to copy properties to the target function type
 <br>from a source function type template argument - e.g. to copy cvref qualifiers:
->```c++
->    static_assert( std::is_same_v< void() &,
->                     function<void()>::set_cvref_as_t<int() &> >);
->```
+```c++
+    static_assert( std::is_same_v< void() &,
+                     function<void()>::set_cvref_as_t<int() &> >);
+```
 >Conventional `add_*`, `remove_*` traits are also provided, taking no arguments:
->```c++
->    static_assert( std::is_same_v< void(),
->                     function<void() const &>::remove_cvref_t >);
->```
-</details>
+```c++
+    static_assert( std::is_same_v< void(),
+                     function<void() const &>::remove_cvref_t >);
+```
+</b></details>
 
 ### [Reference](reference.md)<br>[Design](design.md)
 

@@ -1,5 +1,5 @@
 # **C++ `function_traits` library**
-### An `ltl` library of type traits for introspecting C++ function types:
+### A `ltl` library of type traits for introspecting C++ function types:
 * Function **return** type and **parameter** types; `R(P...)`
 * Existence of **varargs** trailing ellipsis; `R(P...,...)`
 * 'Abominable' **cvref** qualifiers and **noexcept** specifier
@@ -35,7 +35,7 @@ DEALINGS IN THE SOFTWARE.
 </details>
 <hr>
 
-<details><summary><h3 style="display:inline"><b>Background</b>: P0172R0 Abominable Function Types</h3></summary>
+<details><summary style="display:inline"><b>Background</b>: P0172R0 Abominable Function Types</summary>
 
 >**C++ function types** are the types of plain old C/C++ functions:
 <br>e.g.: ` void(), int(), void(int), int(char const*,...)`
@@ -65,7 +65,7 @@ Quoting from [P0172R0](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p
 
 
 
-<details><summary><h3 style="display:inline"><b>Introduction</b>: A complete set of function traits</h3></summary>
+<details><summary style="display:inline"><b>Introduction</b>: A complete set of function traits</summary>
 
 >This library provides traits for properties of function types in C++17 and on.
 <br>The purpose of the library is to access function signatures and test / set qualifiers.
@@ -79,7 +79,7 @@ Quoting from [P0172R0](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p
 </details>
 
 
-<details><summary><h3 style="display:inline"><b>Motivation</b>: Provide the 48 signature specializations</h3></summary>
+<details><summary style="display:inline"><b>Motivation</b>: Provide the 48 signature specializations</summary>
 
 See also [Boost.CallableTraits Motivation](https://www.boost.org/doc/libs/develop/libs/callable_traits/doc/html/index.html#callable_traits.introduction.motivation)
 
@@ -92,7 +92,7 @@ See also [Boost.CallableTraits Motivation](https://www.boost.org/doc/libs/develo
 <br>Since all 48 specializations are needed to implement *any* function trait
 <br>with full generality, one might as well write a full collection of traits.
 
-(*) Copy traits</h3></summary><blockquote><p>See [P1016R0](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1016r0.pdf) 'A few additional type manipulation utilities' `copy_*` & `clone_*` traits.
+(*) Copy traits<blockquote><p>See [P1016R0](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1016r0.pdf) 'A few additional type manipulation utilities' `copy_*` & `clone_*` traits.
 <br>Such traits were not proposed in P0172R0 nor implemented yet in Boost.CallableTraits
 <br>(there's an open [issue](https://github.com/boostorg/callable_traits/issues/139) to add a `copy_member_cvref` trait).
  
@@ -155,13 +155,13 @@ template<class R, class... P> struct fun<R(P..., ...) const volatile && noexcept
 </details>
 
 
-<details><summary><h3 style="display:inline"><b>Aims</b>: A minimal, forward looking, simple dependency</h3></summary>
+<details><summary style="display:inline"><b>Aims</b>: A minimal, forward looking, simple dependency</summary>
 
-- <details><summary><h3 style="display:inline">A <b>complete</b> yet <b>minimal</b> set of function type traits</h3></summary><blockquote><p><b>Complete</b>: provide a way to do any query or modification that may be needed;<br>if you see something that is not reasonably easy to do then open an issue.</p><p><b>Minimal</b>: avoid bloat and duplication in the interface (not that easy).<br>Narrow scope, single responsibility - function traits only, no more, no less.</p></blockquote></details>
+- <details><summary style="display:inline">A <b>complete</b> yet <b>minimal</b> set of function type traits</summary><blockquote><p><b>Complete</b>: provide a way to do any query or modification that may be needed;<br>if you see something that is not reasonably easy to do then open an issue.</p><p><b>Minimal</b>: avoid bloat and duplication in the interface (not that easy).<br>Narrow scope, single responsibility - function traits only, no more, no less.</p></blockquote></details>
 
-- <details><summary><h3 style="display:inline">In a <b>single header</b>, simple to take as a dependency</h3></summary><blockquote><p><b>Simple dependency</b>: one header (or two), self contained with docs.<br>Mesonbuild example as subproject / git submodule. CMake ToDo.<br>Of course, you can just copy the header(s) or cut-n-paste.</p><p><b>Single header</b>: rather than 'fine-grain' headers per trait.<br>Because each trait has to pull in the full 48 specializations,<br>even if a user may only want one of the many traits,<br>it seems not worth the complexity of providing individual headers<br>(unlikely to improve compile time, code organisation or modularity).</p></blockquote></details>
+- <details><summary style="display:inline">In a <b>single header</b>, simple to take as a dependency</summary><blockquote><p><b>Simple dependency</b>: one header (or two), self contained with docs.<br>Mesonbuild example as subproject / git submodule. CMake ToDo.<br>Of course, you can just copy the header(s) or cut-n-paste.</p><p><b>Single header</b>: rather than 'fine-grain' headers per trait.<br>Because each trait has to pull in the full 48 specializations,<br>even if a user may only want one of the many traits,<br>it seems not worth the complexity of providing individual headers<br>(unlikely to improve compile time, code organisation or modularity).</p></blockquote></details>
 
-- <details><summary><h3 style="display:inline"><b>Forward looking</b>: to concepts - down with SFINAE!</h3></summary><blockquote><p>Look towards concepts and contraints with no need for SFINAE tricks<br>No concern for backward <b>compatibility</b> or support of old compilers<br><b>Diverge</b> from the P0172R0 suggested interface as appropriate<br>A clean, modern implementation (macro use internally).</p></blockquote></details>
+- <details><summary style="display:inline"><b>Forward looking</b>: to concepts - down with SFINAE!</summary><blockquote><p>Look towards concepts and contraints with no need for SFINAE tricks<br>No concern for backward <b>compatibility</b> or support of old compilers<br><b>Diverge</b> from the P0172R0 suggested interface as appropriate<br>A clean, modern implementation (macro use internally).</p></blockquote></details>
 
 <h3 style="display:inline"><b>. Non Aims</b>: standard, supported, production-ready</h3>
 
@@ -169,7 +169,7 @@ template<class R, class... P> struct fun<R(P..., ...) const volatile && noexcept
 </details>
 
 
-<details><summary><h3 style="display:inline"><b>Examples 1</b>: Member traits vs global traits</h3></summary>
+<details><summary style="display:inline"><b>Examples 1</b>: Member traits vs global traits</summary>
 
 >For function type `F`, class `function<F>` contains the function's traits as members.
 <br>For non-function type `T`, `function<T>` is an incomplete class type.
@@ -198,7 +198,7 @@ template<class R, class... P> struct fun<R(P..., ...) const volatile && noexcept
 </details>
 
 
-<details><summary><h3 style="display:inline"><b>Examples 2</b>: Set traits vs add / remove traits</h3></summary>
+<details><summary style="display:inline"><b>Examples 2</b>: Set traits vs add / remove traits</summary>
 
 >`set_*` traits are more programmatic than conventional `add_*`, `remove_*` traits.
 <br>Setters for cv qualifiers, noexcept and variadic take `bool` template arguments,

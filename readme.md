@@ -65,7 +65,7 @@ Quoting from [P0172R0](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p
 
 
 
-<details><summary style="display:inline"><b>Introduction</b>: A complete set of function traits</summary>
+<details style="display:inline"><summary style="display:inline"><h2 style="display:inline"><b>Introduction</b>: A complete set of function traits</h2></summary>
 
 ><b>This library provides traits for properties of function types in C++17 and on.
 <br>The purpose of the library is to access function signatures and test / set qualifiers.

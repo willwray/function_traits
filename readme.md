@@ -35,7 +35,8 @@ DEALINGS IN THE SOFTWARE.
 </details>
 <hr>
 
-<details><summary style="display:inline"><b>Background</b>: P0172R0 Abominable Function Types</summary>
+<h2 style="display:inline"><b>Background</b></h2>
+<details><summary style="display:inline">P0172R0 Abominable Function Types</summary>
 
 ><b>**C++ function types** are the types of plain old C/C++ functions:
 <br>e.g.: ` void(), int(), void(int), int(char const*,...)`
@@ -64,8 +65,8 @@ Quoting from [P0172R0](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p
 </b></details>
 
 
-
-<details style="display:inline"><summary style="display:inline"><h2 style="display:inline"><b>Introduction</b>: A complete set of function traits</h2></summary>
+<h2 style="display:inline"><b>Introduction</b></h2>
+<details><summary>A complete set of function traits</summary>
 
 ><b>This library provides traits for properties of function types in C++17 and on.
 <br>The purpose of the library is to access function signatures and test / set qualifiers.
@@ -78,7 +79,9 @@ Quoting from [P0172R0](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p
 <br>It is an experimental design using some C++2a features.</b>
 </details>
 
-<details><summary style="display:inline"><b>Motivation</b>: Provide the 48 signature specializations</summary>
+
+<h2 style="display:inline"><b>Motivation</b></h2>
+<details><summary>Provide the 48 signature specializations</summary>
 
 See also [Boost.CallableTraits Motivation](https://www.boost.org/doc/libs/develop/libs/callable_traits/doc/html/index.html#callable_traits.introduction.motivation)
 
@@ -154,7 +157,8 @@ template<class R, class... P> struct fun<R(P..., ...) const volatile && noexcept
 </details>
 
 
-<details><summary style="display:inline"><b>Aims</b>: A minimal, forward looking, simple dependency</summary>
+<h2 style="display:inline"><b>Aims</b></h2>
+<details><summary>A minimal, forward looking, simple dependency</summary>
 
 - <details><summary style="display:inline">A <b>complete</b> yet <b>minimal</b> set of function type traits</summary><blockquote><p><b>Complete</b>: provide a way to do any query or modification that may be needed;<br>if you see something that is not reasonably easy to do then open an issue.</p><p><b>Minimal</b>: avoid bloat and duplication in the interface (not that easy).<br>Narrow scope, single responsibility - function traits only, no more, no less.</p></blockquote></details>
 
@@ -168,7 +172,8 @@ template<class R, class... P> struct fun<R(P..., ...) const volatile && noexcept
 </details>
 
 
-<details><summary style="display:inline"><b>Examples 1</b>: Member traits vs global traits</summary>
+<h2 style="display:inline"><b>Examples</b></h2>
+<details><summary>Member traits vs global traits</summary>
 
 >For function type `F`, class `function<F>` contains the function's traits as members.
 <br>For non-function type `T`, `function<T>` is an incomplete class type.
@@ -197,7 +202,7 @@ template<class R, class... P> struct fun<R(P..., ...) const volatile && noexcept
 </details>
 
 
-<details><summary style="display:inline"><b>Examples 2</b>: Set traits vs add / remove traits</summary>
+<details><summary>Set traits vs add / remove traits</summary>
 
 ><b>`set_*` traits are more programmatic than conventional `add_*`, `remove_*` traits.
 <br>Setters for cv qualifiers, noexcept and variadic take `bool` template arguments,

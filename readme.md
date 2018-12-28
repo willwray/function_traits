@@ -6,9 +6,6 @@
 * **`const`** | **`volatile`** | **`&`**  | **`&&`** : Function **cvref** qualifiers ('Abominable')  
 * **`noexcept`** | **`noexcept(bool)`** : Function **exception** specification
 
-**Type trait**: A template-based interface to
-    query or modify the properties of types.
-
 
 <hr><details><summary>Copyright &copy; 2018 Will Wray. Distributed under the Boost Software License, Version 1.0.</summary>
 
@@ -41,30 +38,35 @@ DEALINGS IN THE SOFTWARE.
 </details><hr>
 
 
+**Type trait**: A template-based interface to  query or modify the properties of types.
+
+
 This library provides traits for properties of function types in C++17 and on.
-<br>The purpose of the library is to access function signatures and test / set qualifiers.
-<br>It is a low level library mostly for writing higher level libraries that touch functions.
+<br>It is mostly for writing higher level libraries that handle function types.
 
 
 <h2 style="display:inline"><b>Background | Motivation | Aims
 </b></h2>
 
 
-<details><summary style="display:inline"><b>C++ function types</b>: type traits</summary>
+<details><summary style="display:inline"><b>C++ function types</b></summary>
 
->**C++ function types** are the types of plain old C/C++ functions:
-```c++
-void(), int(), void(int), int(char const*,...)
-```
->
+>**C++ function types** are the types of plain old C/C++ functions, e.g.:
+
+    int()                 or  auto() -> int
+    void()                or  auto() -> void
+    void(int)             or  auto(int) -> void
+    int(char const*,...)  or  auto(char const*,...) -> int
+
 >C++ function types can also have cvref qualifiers or noexcept specifier:
-```c++
-int() const&, void(int) volatile, void() noexcept
-```
+
+    int() const&          or auto() const& -> int
+    void() noexcept       or auto() noexcept -> void
+    void(int) volatile    or auto() volatile -> void
 
 >The standard type trait `std::is_function_v<F>` is true for all such types.
 <br>The `std` library does not yet provide other traits for C++ function types,
-<br>mainly due to the complications caused by the possible qualifers:
+<br>mainly due to the complications caused by the possible cvref qualifers:
 </b>
 </details>
 
@@ -89,7 +91,7 @@ Quoting from [P0172R0](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p
 </b></details>
 
 
-<details><summary>Boost.CallableTraits</summary>
+<details><summary><b>Alternative</b>: Boost.CallableTraits</summary>
 
 >[Boost.CallableTraits](https://www.boost.org/doc/libs/develop/libs/callable_traits/doc/html/) implements P0172R0's suggested library interface
 <br>and extends it to support general Callable types.
@@ -191,7 +193,11 @@ template<class R, class... P> struct fun<R(P..., ...) const volatile && noexcept
 </details>
 
 
+### [Reference](reference.md)<br>[Design](design.md)
+
+
 <h2 style="display:inline"><b>Examples</b></h2>
+
 <details><summary>Member traits vs global traits</summary>
 
 >For function type `F`, class `function<F>` contains the function's traits as members.
@@ -249,9 +255,8 @@ Other setters take type arguments, e.g. to change function signature types:
 ```
 </b></details>
 
-### [Reference](reference.md)<br>[Design](design.md)
 
-An illustrative example of an application using some function_traits:
+An example application using some function_traits:
 ```cpp
 #include <tuple>
 #include "function_traits.hpp"

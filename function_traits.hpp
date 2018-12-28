@@ -124,8 +124,8 @@ template <typename T>
 constexpr ref_qual_v reference_v()
 {
   if constexpr (std::is_function_v<T>)
-    return function<T>::is_lvalue_reference_v ? lval_ref_v
-         : function<T>::is_rvalue_reference_v ? rval_ref_v : ref_qual_v{};
+    return typename function<T>::is_lvalue_reference() ? lval_ref_v
+         : typename function<T>::is_rvalue_reference() ? rval_ref_v : ref_qual_v{};
   else
     return std::is_lvalue_reference_v<T> ? lval_ref_v
          : std::is_rvalue_reference_v<T> ? rval_ref_v : ref_qual_v{};
@@ -148,7 +148,7 @@ struct function_quals
 
   using is_cv = std::bool_constant<c||v>;
   using is_reference = std::bool_constant<ref>;
-  using is_cvref = std::bool_constant<c||v||ref>;
+  using is_cvref = std::bool_constant<c||v||ref!=ref_qual_v{}>;
 
   template <bool C>
     using set_const_t = set_quals_t<C,v,ref,nx>;

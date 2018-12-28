@@ -119,13 +119,16 @@ enum ref_qual_v
 };
 
 // reference_v<T>() returns a ref_qual_v value representing
-//  the reference qualifier on type T
+//  the reference qualifier on type T (ordinary type or function type)
 template <typename T>
 constexpr ref_qual_v reference_v()
 {
   if constexpr (std::is_function_v<T>)
-    return typename function<T>::is_lvalue_reference() ? lval_ref_v
-         : typename function<T>::is_rvalue_reference() ? rval_ref_v : ref_qual_v{};
+  {
+    using F = function<T>;
+    return typename F::is_lvalue_reference() ? lval_ref_v
+         : typename F::is_rvalue_reference() ? rval_ref_v : ref_qual_v{};
+  }
   else
     return std::is_lvalue_reference_v<T> ? lval_ref_v
          : std::is_rvalue_reference_v<T> ? rval_ref_v : ref_qual_v{};
@@ -232,7 +235,7 @@ struct function_base<R(P...__VA_ARGS__)>\
  template<bool nx> struct set_quals<1,1,rval_ref_v,nx> { using type = R(P...__VA_ARGS__) const volatile && noexcept(nx); };\
 \
  template <bool c, bool v, ref_qual_v ref, bool nx>\
- using set_qualifiers_t = typename set_quals<c,v,ref,nx>::type;\
+ using set_cvref_noexcept_t = typename set_quals<c,v,ref,nx>::type;\
 };
 FUNCTION_BASE()
 FUNCTION_BASE(,...) // leading comma forwarded via macro varargs
@@ -268,7 +271,7 @@ template <typename R, typename... P>\
 struct function<R(P...__VA_ARGS__) CV REF NX>\
 : function_base<R(P...__VA_ARGS__)>\
 , function_quals<\
-    function_base<R(P...__VA_ARGS__)>::template set_qualifiers_t,\
+    function_base<R(P...__VA_ARGS__)>::template set_cvref_noexcept_t,\
     std::is_const_v<int CV>,\
     std::is_volatile_v<int CV>,\
     reference_v<int REF>(),\

@@ -1,7 +1,7 @@
 #include <type_traits>
 
 /*
-   "function_traits.hpp": function signature and qualifier traits
+   "function_traits.hpp": function signature, cvref and noexcept traits
     ^^^^^^^^^^^^^^^^^^^
         Type trait: A compile-time template-based interface to
                       query or modify the properties of types.
@@ -37,7 +37,7 @@
       '_v' suffix for result value  (the trait is a variable template)
        no suffix for a result class (the trait is a class template
                                      with 'type' or 'value' member)
-    e.g. no suffix:
+    no suffix e.g.:
       function_is_cvref<F> // class inherited from std::bool_constant<?>
 
     Conventional 'add' and 'remove' traits mutate their named trait:
@@ -47,27 +47,26 @@
                                  // leaving signature and exception spec
 
     Unconventionally, this library also provides transforming / mutating
-    'set' traits that take extra template arguments:
+    'set' traits that take extra template arguments, e.g.:
 
       function_set_noexcept_t<F,B>  // set noexcept(B) for bool const B
       function_set_signature_t<F,S> // set S as the function signature
                                     // keeping cvref-nx of function F
 
-    These 'set' traits allow to copy properties between function types.
-
-    Reference qualifiers are represented by an of enum type ref_qual_v:
+    Reference qualifiers are represented by an enum type ref_qual_v:
       - ref_qual_v{}  no reference qualifier (default)
       - lval_ref_v    lvalue reference qualifier: &
       - rval_ref_v    rvalue reference qualifier: &&
 
-      function_set_reference<F> // == function_remove_reference<F>
-
-      function_set_reference<F, lval_ref_v> // set ref qual to &
-      function_set_reference_lvalue<F>      // set ref qual to &
-
     Template function reference_v<T> returns the reference type of T:
 
       reference_v<T>() -> ref_qual_v
+
+      function_set_reference<F, lval_ref_v>   // set ref qual to &
+      function_set_reference_lvalue<F>        // set ref qual to &
+
+      function_set_reference<F, ref_qual_v{}> // set ref qual to none
+      function_remove_reference<F>            // set ref qual to none
 
     Copying all cvref qualifiers is verbose with 'set_cvref' so this is
     provided as a 'set_cvref_as' trait:
@@ -149,7 +148,7 @@ struct function_quals
     using set_volatile_t = set_quals_t<c,V,ref,nx>;
   template <bool C, bool V>
    using set_cv_t = set_quals_t<C,V,ref,nx>;
-  template <ref_qual_v Ref=ref_qual_v{}>
+  template <ref_qual_v Ref>
     using set_reference_t = set_quals_t<c,v,Ref,nx>;
   template <bool C, bool V, ref_qual_v Ref=ref_qual_v{}>
     using set_cvref_t = set_quals_t<C,V,Ref,nx>;
@@ -162,7 +161,7 @@ struct function_quals
     using set_volatile = function<set_volatile_t<V>>;
   template <bool C, bool V>
     using set_cv = function<set_cv_t<C,V>>;
-  template <ref_qual_v Ref=ref_qual_v{}>
+  template <ref_qual_v Ref>
     using set_reference = function<set_reference_t<Ref>>;
   template <bool C, bool V, ref_qual_v Ref=ref_qual_v{}>
     using set_cvref = function<set_cvref_t<C,V,Ref>>;
@@ -350,9 +349,9 @@ template <typename F>
 using function_remove_cv_t = function_set_cv_t<F,false,false>;
 
 // set_reference, set_reference_lvalue, set_reference_rvalue
-template <typename F, ref_qual_v R = ref_qual_v{}>
+template <typename F, ref_qual_v R>
 using function_set_reference = typename function<F>::template set_reference<R>;
-template <typename F, ref_qual_v R = ref_qual_v{}>
+template <typename F, ref_qual_v R>
 using function_set_reference_t = typename function<F>::template set_reference_t<R>;
 
 template <typename F>
@@ -373,9 +372,9 @@ template <typename F>
 using function_add_reference_t = function_set_reference_t<F,true>;
 */
 template <typename F>
-using function_remove_reference = function_set_reference<F>;
+using function_remove_reference = function_set_reference<F,ref_qual_v{}>;
 template <typename F>
-using function_remove_reference_t = function_set_reference_t<F>;
+using function_remove_reference_t = function_set_reference_t<F,ref_qual_v{}>;
 
 // set_cvref, set_cvref_as, remove_cvref (add_cvref makes no sense)
 template <typename F, bool C, bool V, ref_qual_v R = ref_qual_v{}>

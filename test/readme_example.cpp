@@ -27,14 +27,6 @@ int logger(F C::* log_mf, Vargs... vargs) noexcept
 template int logger(decltype(&Log0::log));
 template int logger(decltype(&LogV::log),int);
 
-static_assert(not ltl::function<void()>::is_noexcept());
-static_assert( ltl::function<void() noexcept>::is_noexcept());
-static_assert( ltl::function<void(...) noexcept>::is_noexcept());
-
-static_assert( ltl::function_is_const_v<void() const &>);
-static_assert(!ltl::function_is_const_v<void() volatile>);
-
-
 int main()
 {
     return 0;

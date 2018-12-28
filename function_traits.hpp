@@ -54,7 +54,8 @@
                                     // keeping cvref-nx of function F
 
     Reference qualifiers are represented by an enum type ref_qual_v:
-      - ref_qual_v{}  no reference qualifier (default)
+
+      - ref_qual_v{}  no reference qualifier
       - lval_ref_v    lvalue reference qualifier: &
       - rval_ref_v    rvalue reference qualifier: &&
 
@@ -62,11 +63,18 @@
 
       reference_v<T>() -> ref_qual_v
 
+    The 'set_reference' traits then allow to copy between function types:
+
+      function_set_reference<F, reference_v<G>()> // copy G ref qual to F
+
       function_set_reference<F, lval_ref_v>   // set ref qual to &
       function_set_reference_lvalue<F>        // set ref qual to &
 
       function_set_reference<F, ref_qual_v{}> // set ref qual to none
       function_remove_reference<F>            // set ref qual to none
+
+    (There is no 'add_reference' because this may be taken to imply a
+     reference collapse semantic which does not apply to function types.)
 
     Copying all cvref qualifiers is verbose with 'set_cvref' so this is
     provided as a 'set_cvref_as' trait:
@@ -87,7 +95,7 @@
       function_return_type_t<F> typename function<F>::return_type_t
       function_set_const<F,?>   typename function<F>::template set_const<?>
 
-    Note the disambiguating 'typename' and 'template' keywords.
+    Disambiguating 'typename' and 'template' keywords may be needed.
 
     Note: MSVC may need __cdecl for varargs (untested)
 */

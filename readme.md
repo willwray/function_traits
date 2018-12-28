@@ -33,7 +33,7 @@ FOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE,
 ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 ```
-(Also at http://www.boost.org/LICENSE_1_0.txt or in accompanying file [LICENSE.md](LICENSE.md))
+(Also at http://www.boost.org/LICENSE_1_0.txt and accompanying file [LICENSE_1_0.txt](LICENSE_1_0.txt))
 
 </details><hr>
 

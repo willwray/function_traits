@@ -1,12 +1,18 @@
 # **C++ `function_traits` library**
-### A `ltl` library of type traits for introspecting C++ function types:
-* Function **return** type and **parameter** types; `R(P...)`
-* Existence of **varargs** trailing ellipsis; `R(P...,...)`
-* 'Abominable' **cvref** qualifiers and **noexcept** specifier
-----
-<details><summary>Copyright &copy; 2018 Will Wray. Distributed under the Boost Software License, Version 1.0.</summary>
 
-### <b>Boost Software License - Version 1.0 - August 17th, 2003
+### A `ltl` library of type traits for properties of C++ function types:
+* **`R(P...)`** : Function **signature**; **return** type **`R`** and **parameter** types **`P...`**
+* `R(P...,`**`...`**`)` : Existence of C-style **varargs** (denoted by trailing ellipsis **`...`**)
+* **`const`** | **`volatile`** | **`&`**  | **`&&`** : Function **cvref** qualifiers ('Abominable')  
+* **`noexcept`** | **`noexcept(bool)`** : Function **exception** specification
+
+**Type trait**: A template-based interface to
+    query or modify the properties of types.
+
+
+<hr><details><summary>Copyright &copy; 2018 Will Wray. Distributed under the Boost Software License, Version 1.0.</summary>
+
+### <b>Boost Software License - Version 1.0 - August 17th, 2003</b>
 ```
 Permission is hereby granted, free of charge, to any person or organization
 obtaining a copy of the software and accompanying documentation covered by
@@ -31,27 +37,45 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 ```
 (Also at http://www.boost.org/LICENSE_1_0.txt or in accompanying file [LICENSE.md](LICENSE.md))
-</b>
-</details>
-<hr>
 
-<h2 style="display:inline"><b>Background</b></h2>
-<details><summary style="display:inline">P0172R0 Abominable Function Types</summary>
+</details><hr>
 
-><b>**C++ function types** are the types of plain old C/C++ functions:
-<br>e.g.: ` void(), int(), void(int), int(char const*,...)`
+
+This library provides traits for properties of function types in C++17 and on.
+<br>The purpose of the library is to access function signatures and test / set qualifiers.
+<br>It is a low level library mostly for writing higher level libraries that touch functions.
+
+
+<h2 style="display:inline"><b>Background | Motivation | Aims
+</b></h2>
+
+
+<details><summary style="display:inline"><b>C++ function types</b>: type traits</summary>
+
+>**C++ function types** are the types of plain old C/C++ functions:
+```c++
+void(), int(), void(int), int(char const*,...)
+```
 >
 >C++ function types can also have cvref qualifiers or noexcept specifier:
-<br>e.g.: `int() const&, void(int) volatile, void() noexcept`
->
+```c++
+int() const&, void(int) volatile, void() noexcept
+```
+
 >The standard type trait `std::is_function_v<F>` is true for all such types.
 <br>The `std` library does not yet provide other traits for C++ function types,
 <br>mainly due to the complications caused by the possible qualifers:
+</b>
+</details>
+
+<details><summary style="display:inline"><b>Background</b>: P0172R0 Abominable Function Types</summary>
 
 Quoting from [P0172R0](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0172r0.html) section 2.1, Definitions:
 
+><dl>
 ><dt><i>Abominable function types</i>:</dt>
 ><dd>Types produced by writing a function type followed by cv-ref qualifiers:</dd>
+></dl>
 
 ```cpp
    using regular    = void();
@@ -65,23 +89,18 @@ Quoting from [P0172R0](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p
 </b></details>
 
 
-<h2 style="display:inline"><b>Introduction</b></h2>
-<details><summary>A complete set of function traits</summary>
+<details><summary>Boost.CallableTraits</summary>
 
-><b>This library provides traits for properties of function types in C++17 and on.
-<br>The purpose of the library is to access function signatures and test / set qualifiers.
-<br>It is a low level library mostly for writing higher level libraries that touch functions.
->
->[Boost.CallableTraits](https://www.boost.org/doc/libs/develop/libs/callable_traits/doc/html/) implements P0172R0's suggested library interface, extended to
-<br>support general Callable types. It is a robust, reviewed library for production use.
+>[Boost.CallableTraits](https://www.boost.org/doc/libs/develop/libs/callable_traits/doc/html/) implements P0172R0's suggested library interface
+<br>and extends it to support general Callable types.
+<br>It is a robust, reviewed library for production use.
 >
 >This library doesn't provide Callable traits, just a complete set of function traits.
-<br>It is an experimental design using some C++2a features.</b>
+<br>It is an experimental design using C++17 features.</b>
 </details>
 
 
-<h2 style="display:inline"><b>Motivation</b></h2>
-<details><summary>Provide the 48 signature specializations</summary>
+<details><summary><b>Motivation</b>: Provide the 48 signature specializations</summary>
 
 See also [Boost.CallableTraits Motivation](https://www.boost.org/doc/libs/develop/libs/callable_traits/doc/html/index.html#callable_traits.introduction.motivation)
 
@@ -100,8 +119,9 @@ See also [Boost.CallableTraits Motivation](https://www.boost.org/doc/libs/develo
  
 </details>
 
-<details><summary><b>The 48 specializations</b> (also in P0172, Boost.CallableTraits and cppreference)</summary>
+<details><summary>The 48 specializations</summary>
 
+(also in P0172, Boost.CallableTraits and cppreference)
 ```c++
 template<typename T> struct fun;
 
@@ -157,8 +177,7 @@ template<class R, class... P> struct fun<R(P..., ...) const volatile && noexcept
 </details>
 
 
-<h2 style="display:inline"><b>Aims</b></h2>
-<details><summary>A minimal, forward looking, simple dependency</summary>
+<details><summary><b>Aims</b>: A complete, minimal, forward looking, simple dependency</summary>
 
 - <details><summary style="display:inline">A <b>complete</b> yet <b>minimal</b> set of function type traits</summary><blockquote><p><b>Complete</b>: provide a way to do any query or modification that may be needed;<br>if you see something that is not reasonably easy to do then open an issue.</p><p><b>Minimal</b>: avoid bloat and duplication in the interface (not that easy).<br>Narrow scope, single responsibility - function traits only, no more, no less.</p></blockquote></details>
 

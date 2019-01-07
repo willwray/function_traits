@@ -1,16 +1,26 @@
 # **C++ `function_traits` library**
 
-### A `ltl` library of type traits for properties of C++ function types:
-* **`R(P...)`** : Function **signature**; **return** type **`R`** and **parameter** types **`P...`**
-* `R(P...,`**`...`**`)` : Existence of C-style **varargs** (denoted by trailing ellipsis **`...`**)
-* **`const`** | **`volatile`** | **`&`**  | **`&&`** : Function **cvref** qualifiers ('Abominable')  
-* **`noexcept`** | **`noexcept(bool)`** : Function **exception** specification
+## Type traits for properties of C++ function types
 
+* **`R(P...)`** : Function '**signature**'; **return** type **`R`**, **parameter** types **`P...`**, and ...
+* `R(P...,`**`...`**`)` : existence of C-style **varargs** (denoted by trailing ellipsis **`...`**)
+* `R(P...)` **`noexcept(bool)`** : Function **exception** specification; true | false
+* `R(P...)` [**`const`**] [**`volatile`**] [**`&`**|**`&&`**] : Function **cvref** qualifiers
 
-<hr><details><summary>Copyright &copy; 2018 Will Wray. Distributed under the Boost Software License, Version 1.0.</summary>
+A general function type, with <typename `R`, typename... `P`, bool `X`>:
 
-### <b>Boost Software License - Version 1.0 - August 17th, 2003</b>
-```
+* `R(P...`[`,...`]`)` [`const`] [`volatile`] [`&`|`&&`] `noexcept(X)`
+
+`function_traits` provides traits for properties of general function types in C++17.  
+The main application is in higher level libraries that must handle all function types  
+including possibly cvref-qualified function types - the 'abominable'  function types.
+
+----
+<details><summary>Copyright &copy; 2018 Will Wray. Distributed under the Boost Software License, V1.0</summary>
+
+### **Boost Software License** - Version 1.0 - August 17th, 2003
+
+```txt
 Permission is hereby granted, free of charge, to any person or organization
 obtaining a copy of the software and accompanying documentation covered by
 this license (the "Software") to use, reproduce, display, distribute,
@@ -33,100 +43,166 @@ FOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE,
 ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 ```
-(Also at http://www.boost.org/LICENSE_1_0.txt and accompanying file [LICENSE_1_0.txt](LICENSE_1_0.txt))
 
-</details><hr>
+(Also at [boost.org](http://www.boost.org/LICENSE_1_0.txt) and accompanying file [LICENSE_1_0.txt](LICENSE_1_0.txt))
 
+</details>
 
-**Type trait**: A template-based interface to  query or modify the properties of types.
+----
 
+## **Description | Background | Motivation | Aims**
 
-This library provides traits for properties of function types in C++17 and on.
-<br>It is mostly for writing higher level libraries that handle function types.
+<details><summary><b>Description</b></summary>
 
+>`function_traits` is a single-header library of traits for C++ function types.  
+No more, no less; it does not provide traits for general [Callable](https://en.cppreference.com/w/cpp/named_req/Callable) types -  
+(function traits can ease implementation of things like callable traits).
+>
+>It is an 'alpha' design with an experimental interface, subject to change.  
+It targets C++17 on recent gcc / clang / msvc compilers.  
+Backwards compatibility, for older compilers or for pre-17, is not a priority.
 
-<h2 style="display:inline"><b>Background | Motivation | Aims
-</b></h2>
+</details>
 
+<details><summary>C++ function types</summary>
 
-<details><summary style="display:inline"><b>C++ function types</b></summary>
-
->**C++ function types** are the types of plain old C/C++ functions, e.g.:
+>**C++ function types** include the types of ordinary C/C++ free functions, e.g.:
 
     int()                 or  auto() -> int
-    void()                or  auto() -> void
+    void() noexcept       or  auto() noexcept -> void
     void(int)             or  auto(int) -> void
     int(char const*,...)  or  auto(char const*,...) -> int
 
->C++ function types can also have cvref qualifiers or noexcept specifier:
+>C++ function types can also have cvref qualifiers:
 
     int() const&          or auto() const& -> int
-    void() noexcept       or auto() noexcept -> void
-    void(int) volatile    or auto() volatile -> void
+    void() && noexcept    or auto() && noexcept -> void
+    void(int) volatile    or auto(int) volatile -> void
 
->The standard type trait `std::is_function_v<F>` is true for all such types.
-<br>The `std` library does not yet provide other traits for C++ function types,
-<br>mainly due to the complications caused by the possible cvref qualifers:
-</b>
+>Such cvref-qualified function types are an artifact of the C++ type system;  
+you cannot declare an ordinary free function with such a type and it is  
+forbidden to form a pointer or a reference to a cvref-qualified function type.
+>
+>The standard type trait `std::is_function_v<F>` is true for all such types.  
+>  
+>The `std` library does not (yet) provide other traits for C++ function types,  
+mainly due to the complications caused by the possible cvref qualifers,  
+so this library fills in for the lack of std traits.
 </details>
 
-<details><summary style="display:inline"><b>Background</b>: P0172R0 Abominable Function Types</summary>
+<details><summary><b>Background</b>: P0172R0 Abominable Function Types</summary>
 
-Quoting from [P0172R0](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0172r0.html) section 2.1, Definitions:
+Quoting from [P0172R0](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0172r0.html) section 2.1, Definition:
 
-><dl>
-><dt><i>Abominable function types</i>:</dt>
-><dd>Types produced by writing a function type followed by cv-ref qualifiers:</dd>
-></dl>
+>[...] an *abominable* function type is the type produced by writing a function type  
+followed by a cv-ref qualifier.
+
+Example:
 
 ```cpp
    using regular    = void();
    using abominable = void() const volatile &&;
 ```
->In the example above, `regular` names a familiar function type [...] no surprises,
-<br>`abominable` also names a function type, not a reference type, and
-<br>despite appearances, is neither a const nor a volatile qualified type. <br>There is no such thing as a cv-qualified function type in the type system, <br>and the abominable function type is something else entirely.
+
+>In the example above, `regular` names a familiar function type [...] no surprises,  
+`abominable` also names a function type, not a reference type, and  
+despite appearances, is neither a const nor a volatile qualified type.  
+There is no such thing as a cv-qualified function type in the type system,  
+and the abominable function type is something else entirely.
 
 * P0172R0 **Abominable Function Types** by Alisdair Meredith, Nov 2015
-</b></details>
 
-
-<details><summary><b>Alternative</b>: Boost.CallableTraits</summary>
-
->[Boost.CallableTraits](https://www.boost.org/doc/libs/develop/libs/callable_traits/doc/html/) implements P0172R0's suggested library interface
-<br>and extends it to support general Callable types.
-<br>It is a robust, reviewed library for production use.
->
->This library doesn't provide Callable traits, just a complete set of function traits.
-<br>It is an experimental design using C++17 features.</b>
 </details>
 
+<details><summary>Boost.CallableTraits: A P0172 implementation and more</summary>
 
-<details><summary><b>Motivation</b>: Provide the 48 signature specializations</summary>
+>[Boost.CallableTraits](https://www.boost.org/doc/libs/develop/libs/callable_traits/doc/html/) implements P0172R0's suggested library interface,  
+extended to support general [Callable](https://en.cppreference.com/w/cpp/named_req/Callable) types on top of C++ function types.  
+It is a robust, reviewed library with tests, compatibility matrix and CI.
+
+</details>
+
+<details><summary><b>Motivation</b>: Provide the 24 (or 48) required specializations</summary>
 
 See also [Boost.CallableTraits Motivation](https://www.boost.org/doc/libs/develop/libs/callable_traits/doc/html/index.html#callable_traits.introduction.motivation)
 
-><b>There are 48 function signature specializations required since C++17:</b>
-- 12 combinations of cvref qualifiers (4 cv x 3 ref)
-- x 2 for possible trailing elipsis (C-style varargs ...)
-- x 2 for `noexcept` - part of the function type since C++17.
->
-><b>I wanted a trait to copy qualifiers from source to target function types*.
-<br>Since all 48 specializations are needed to implement *any* function trait
-<br>with full generality, one might as well write a full collection of traits.</b>
+>'Abominable' function cvref qualifiers cannot be deduced concisely.  
+C-style varargs - a trailing ellipsis ... - cannot be deduced concisely.  
+A total of 24 separate template specializations are needed to match  
+a possibly abominable or variadic function type:
 
-(*) Copy traits<blockquote><p>See [P1016R0](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1016r0.pdf) 'A few additional type manipulation utilities' `copy_*` & `clone_*` traits.
-<br>Such traits were not proposed in P0172R0 nor implemented yet in Boost.CallableTraits
-<br>(there's an open [issue](https://github.com/boostorg/callable_traits/issues/139) to add a `copy_member_cvref` trait).
- 
+* 12 combinations of cvref qualifiers (4 cv x 3 ref)
+* x 2 for presence of C-style varargs (trailing ellipsis...)
+
+>If `noexcept` is not deduced directly then 48 specializations are needed:  
+
+* x 2 for `noexcept` true or false
+
+>### Copy traits
+>I wanted a trait to copy qualifiers from source to target function types<sup>1</sup>.  
+Since all 24/48 specializations are needed to implement *any* function trait  
+with full generality, one might as well write a full collection of traits.
+>
+>[1] C++ standard library `copy_*` traits are proposed in [P1016](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1016r0.pdf)  
+'A few additional type manipulation utilities' (unlikely to be voted in).  
+Copy traits like this are not implemented yet in Boost.CallableTraits  
+though there's an open [issue](https://github.com/boostorg/callable_traits/issues/139) to add a `copy_member_cvref` trait.
+>
+>This function_traits library provides a couple of options:  
+>`function_set_cvref_as<F,G>` copies `G`'s cvref qualifiers to `F`, or  
+`function_set_signature<G, function_signature_t<F>>`  
+copies `G`'s cvref qualifiers and exception spec to `F`
+
 </details>
 
-<details><summary>The 48 specializations</summary>
+<details><summary>The 24 (or 48) function pattern specializations</summary>
 
-(also in P0172, Boost.CallableTraits and cppreference)
+24 template specializations are required to match any function type pattern  
+(assuming that `noexcept` is deducible in partial specializations - see note below):
+
 ```c++
+// Primary template
 template<typename T> struct fun;
 
+// The 24 template partial specializations
+// to match cvref qualifiers (x12) and presence of varargs (x2)
+// while deducing return type R, parameters P... and noexcept(bool)
+template<class R, class... P, bool X> struct fun<R(P...) noexcept(X)> {};
+template<class R, class... P, bool X> struct fun<R(P...) & noexcept(X)> {};
+template<class R, class... P, bool X> struct fun<R(P...) && noexcept(X)> {};
+template<class R, class... P, bool X> struct fun<R(P...) const noexcept(X)> {};
+template<class R, class... P, bool X> struct fun<R(P...) const & noexcept(X)> {};
+template<class R, class... P, bool X> struct fun<R(P...) const && noexcept(X)> {};
+template<class R, class... P, bool X> struct fun<R(P...) volatile noexcept(X)> {};
+template<class R, class... P, bool X> struct fun<R(P...) volatile & noexcept(X)> {};
+template<class R, class... P, bool X> struct fun<R(P...) volatile && noexcept(X)> {};
+template<class R, class... P, bool X> struct fun<R(P...) const volatile noexcept(X)> {};
+template<class R, class... P, bool X> struct fun<R(P...) const volatile & noexcept(X)> {};
+template<class R, class... P, bool X> struct fun<R(P...) const volatile && noexcept(X)> {};
+
+template<class R, class... P, bool X> struct fun<R(P..., ...) noexcept(X)> {};
+template<class R, class... P, bool X> struct fun<R(P..., ...) & noexcept(X)> {};
+template<class R, class... P, bool X> struct fun<R(P..., ...) && noexcept(X)> {};
+template<class R, class... P, bool X> struct fun<R(P..., ...) const noexcept(X)> {};
+template<class R, class... P, bool X> struct fun<R(P..., ...) const & noexcept(X)> {};
+template<class R, class... P, bool X> struct fun<R(P..., ...) const && noexcept(X)> {};
+template<class R, class... P, bool X> struct fun<R(P..., ...) volatile noexcept(X)> {};
+template<class R, class... P, bool X> struct fun<R(P..., ...) volatile & noexcept(X)> {};
+template<class R, class... P, bool X> struct fun<R(P..., ...) volatile && noexcept(X)> {};
+template<class R, class... P, bool X> struct fun<R(P..., ...) const volatile noexcept(X)> {};
+template<class R, class... P, bool X> struct fun<R(P..., ...) const volatile & noexcept(X)> {};
+template<class R, class... P, bool X> struct fun<R(P..., ...) const volatile && noexcept(X)> {};
+```
+
+Both GCC and Clang deduce noexcept as intended...  
+Unfortunately, when `noexcept` was introduced as part of the type system  
+the standard was not also updated to specify deduction of noexcept.  
+This oversight should be corrected by a defect report before C++2a.
+
+Currently (start of 2019) MSVC does not deduce noexcept and so requires  
+the noexcept cases to be expanded via 48 specializations:
+
+```c++
 template<class R, class... P> struct fun<R(P...)> {};
 template<class R, class... P> struct fun<R(P...) &> {};
 template<class R, class... P> struct fun<R(P...) &&> {};
@@ -151,6 +227,7 @@ template<class R, class... P> struct fun<R(P..., ...) volatile &&> {};
 template<class R, class... P> struct fun<R(P..., ...) const volatile> {};
 template<class R, class... P> struct fun<R(P..., ...) const volatile &> {};
 template<class R, class... P> struct fun<R(P..., ...) const volatile &&> {};
+
 template<class R, class... P> struct fun<R(P...) noexcept> {};
 template<class R, class... P> struct fun<R(P...) & noexcept> {};
 template<class R, class... P> struct fun<R(P...) && noexcept> {};
@@ -176,87 +253,124 @@ template<class R, class... P> struct fun<R(P..., ...) const volatile noexcept> {
 template<class R, class... P> struct fun<R(P..., ...) const volatile & noexcept> {};
 template<class R, class... P> struct fun<R(P..., ...) const volatile && noexcept> {};
 ```
-</details>
 
+These specializations are also listed in [Boost.CallableTraits](https://www.boost.org/doc/libs/develop/libs/callable_traits/doc/html/index.html#callable_traits.introduction.motivation) and [cppreference](https://en.cppreference.com/w/cpp/types/is_function) `is_function`
+
+</details>
 
 <details><summary><b>Aims</b>: A complete, minimal, forward looking, simple dependency</summary>
 
-- <details><summary style="display:inline">A <b>complete</b> yet <b>minimal</b> set of function type traits</summary><blockquote><p><b>Complete</b>: provide a way to do any query or modification that may be needed;<br>if you see something that is not reasonably easy to do then open an issue.</p><p><b>Minimal</b>: avoid bloat and duplication in the interface (not that easy).<br>Narrow scope, single responsibility - function traits only, no more, no less.</p></blockquote></details>
+* <details><summary>A <b>complete</b> yet <b>minimal</b> set of function type traits</summary>
 
-- <details><summary style="display:inline">In a <b>single header</b>, simple to take as a dependency</summary><blockquote><p><b>Simple dependency</b>: one header (or two), self contained with docs.<br>Mesonbuild example as subproject / git submodule. CMake ToDo.<br>Of course, you can just copy the header(s) or cut-n-paste.</p><p><b>Single header</b>: rather than 'fine-grain' headers per trait.<br>Because each trait has to pull in the full 48 specializations,<br>even if a user may only want one of the many traits,<br>it seems not worth the complexity of providing individual headers<br>(unlikely to improve compile time, code organisation or modularity).</p></blockquote></details>
+    **Complete**: provide a way to do any query or modification that may be needed;  
+    if you see something that is not reasonably easy to do then open an issue.
 
-- <details><summary style="display:inline"><b>Forward looking</b>: to concepts - down with SFINAE!</summary><blockquote><p>Look towards concepts and contraints with no need for SFINAE tricks<br>No concern for backward <b>compatibility</b> or support of old compilers<br><b>Diverge</b> from the P0172R0 suggested interface as appropriate<br>A clean, modern implementation (macro use internally).</p></blockquote></details>
+    **Minimal**: avoid bloat and duplication in the interface (not that easy).  
+    Narrow scope, single responsibility - function traits only, no more, no less.
+    </details>
 
-<b>. Non Aims</b>: standard, supported, production-ready
+* <details><summary>In a <b>single header</b>, simple to take as a dependency</summary>
 
->This is a niche library not meant to be a `std` proposal.
+    **Simple dependency**: single header, self contained with docs.  
+    Mesonbuild example as subproject / git submodule. CMake ToDo.  
+    Of course, you can just copy the header or cut-n-paste.
+
+    **Single header**: rather than 'fine-grain' headers per trait.  
+    Because each trait has to pull in the full 24 (or 48) specializations,  
+    even if a user may only want one of the many traits,  
+    it seems not worth the complexity of providing individual headers  
+    (unlikely to improve compile time, code organisation or modularity).
+    </details>
+
+* <details><summary><b>Forward looking</b>: to concepts - down with SFINAE!</summary>
+
+    Look towards concepts and contraints with no need for SFINAE tricks  
+    No concern for backward **compatibility** or support of old compilers  
+    **Diverge** from the P0172R0 suggested interface as appropriate  
+    A clean, modern implementation (macro use confined to header).
+    </details>
+
+* **Non Aims**: standard, supported, production-ready
+
+    This is a niche library not meant to be a `std` proposal.
 </details>
 
+## [Reference | Design Notes](reference.md)
 
-### [Reference](reference.md)<br>[Design](design.md)
-
-
-<h2 style="display:inline"><b>Examples</b></h2>
+## **Examples**
 
 <details><summary>Member traits vs global traits</summary>
 
->For function type `F`, class `function<F>` contains the function's traits as members.
-<br>For non-function type `T`, `function<T>` is an incomplete class type.
+>For function type `F`, class `function<F>` contains the function's traits as members.  
+For non-function type `T`, `function<T>` is an incomplete class type.
 >
 >**Member traits** of `function<F>` are a convenient interface for most use cases:
+
 ```C++
     #include <ltl/function_trait_class> // member traits only
     static_assert( std::is_void_v<
                        ltl::function<void()>::return_type_t >);
     static_assert( not ltl::function<void()>::is_noexcept() );
 ```
+
 >Member types need `typename` to disambiguate them as types in some cases:
+
 ```c++
     using R = typename ltl::function<void()>::return_type_t;
 ```
->(`typename` will be needed in fewer cases once we have [P0634](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0634r3.html) 'Down with typename!')
-<br>**Global traits** are defined in a separate header (that includes function_trait_class):
+
+>(`typename` will be needed in fewer cases once we have [P0634](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0634r3.html) 'Down with typename!')  
+**Global traits** are defined in a separate header (that includes function_trait_class):
+
 ```c++
-    #include <ltl/function_traits> // member and global traits 
+    #include <ltl/function_traits> // member and global traits
     static_assert( std::is_void_v<
                        ltl::function_return_type_t<void()> >);
     static_assert( not ltl::function_is_noexcept_v<void()> );
 ```
->Global or namespace-scope traits are conventional for `std` traits etc.
-<br>Global traits act as template 'type functions' so work well in generic code.
-</details>
 
+>Global or namespace-scope traits are conventional for `std` traits etc.  
+Global traits act as template 'type functions' so work well in generic code.
+</details>
 
 <details><summary>Set traits vs add / remove traits</summary>
 
-><b>`set_*` traits are more programmatic than conventional `add_*`, `remove_*` traits.
-<br>Setters for cv qualifiers, noexcept and variadic take `bool` template arguments,
-<br>Setters for ref qualifiers take `ltl::ref_qual_v` template arguments:
+>`set_*` traits are more programmatic than conventional `add_*`, `remove_*` traits.  
+Setters for cv qualifiers, noexcept and variadic take `bool` template arguments,  
+Setters for ref qualifiers take `ltl::ref_qual_v` template arguments:
+
 ```c++
     using namespace ltl;
     static_assert( function_is_noexcept_v<
                      function<void()>::set_noexcept_t<true> >);
 ```
-Other setters take type arguments, e.g. to change function signature types:
+
+>Other setters take type arguments, e.g. to change function signature types:
+
 ```c++
     static_assert( std::is_same_v< void(),
                      function<int()>::set_return_type_t<void> >);
 ```
->`set_*_as` traits provide a way to copy properties to the target function type
-<br>from a source function type template argument - e.g. to copy cvref qualifiers:
+
+>`set_*_as` traits provide a way to copy properties to the target function type  
+from a source function type template argument - e.g. to copy cvref qualifiers:
+
 ```c++
     static_assert( std::is_same_v< void() &,
                      function<void()>::set_cvref_as_t<int() &> >);
 ```
+
 >Conventional `add_*`, `remove_*` traits are also provided, taking no arguments:
+
 ```c++
     static_assert( std::is_same_v< void(),
                      function<void() const &>::remove_cvref_t >);
 ```
+
 </b></details>
 
-
 An example application using some function_traits:
+
 ```cpp
 #include <tuple>
 #include "function_traits.hpp"

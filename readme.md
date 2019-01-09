@@ -344,7 +344,7 @@ They take no arguments beyond the function type to modify:
   static_assert(
       std::is_same_v< function_add_const_t<void() &>,
                                            void() const& >
-      std::is_same_v< function_remove_cvref_t<void() const &>,
+   && std::is_same_v< function_remove_cvref_t<void() const &>,
                                               void() >
   );
 ```

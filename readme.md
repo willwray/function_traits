@@ -299,77 +299,119 @@ These specializations are also listed in [Boost.CallableTraits](https://www.boos
 
 ## **Examples**
 
-<details><summary>Member traits vs global traits</summary>
+<details><summary>Predicate traits and type property traits</summary>
 
->For function type `F`, class `function<F>` contains the function's traits as members.  
-For non-function type `T`, `function<T>` is an incomplete class type.
->
->**Member traits** of `function<F>` are a convenient interface for most use cases:
-
-```C++
-    #include <ltl/function_trait_class> // member traits only
-    static_assert( std::is_void_v<
-                       ltl::function<void()>::return_type_t >);
-    static_assert( not ltl::function<void()>::is_noexcept() );
-```
-
->Member types need `typename` to disambiguate them as types in some cases:
+>Test if a function type is const / cvref / noexcept:  
 
 ```c++
-    using R = typename ltl::function<void()>::return_type_t;
+  #include <ltl/function_traits.hpp>
+
+  using FVCX = void() const noexcept;
+
+  static_assert(
+          ltl::function_is_const_v< FVCX >
+       && ltl::function_is_cvref_v< FVCX >
+       && ltl::function_is_noexcept_v< FVCX >
+  );
 ```
 
->(`typename` will be needed in fewer cases once we have [P0634](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0634r3.html) 'Down with typename!')  
-**Global traits** are defined in a separate header (that includes function_trait_class):
+>Get the return type of a function type and a type-list of its parameter types:
 
 ```c++
-    #include <ltl/function_traits> // member and global traits
-    static_assert( std::is_void_v<
-                       ltl::function_return_type_t<void()> >);
-    static_assert( not ltl::function_is_noexcept_v<void()> );
+  #include <tuple>
+  #include <type_traits>
+
+  using FVFB = void( char, bool() );
+
+  static_assert(
+     std::is_void_v< ltl::function_return_type_t< FVFB > >
+  && std::is_same_v< ltl::function_args_t< FVFB, std::tuple >
+                   , std::tuple< char, bool(*)() >
+     >
+  );
 ```
 
->Global or namespace-scope traits are conventional for `std` traits etc.  
-Global traits act as template 'type functions' so work well in generic code.
+
 </details>
 
-<details><summary>Set traits vs add / remove traits</summary>
+<details><summary>Add / remove traits and set traits</summary>
 
->`set_*` traits are more programmatic than conventional `add_*`, `remove_*` traits.  
-Setters for cv qualifiers, noexcept and variadic take `bool` template arguments,  
-Setters for ref qualifiers take `ltl::ref_qual_v` template arguments:
+>Conventional `add_*`, `remove_*` traits modify the given property `*`.  
+They take no arguments beyond the function type to modify:
 
 ```c++
-    using namespace ltl;
-    static_assert( function_is_noexcept_v<
-                     function<void()>::set_noexcept_t<true> >);
+  using namespace ltl;
+  static_assert(
+      std::is_same_v< function_add_const_t<void() &>,
+                                           void() const& >
+      std::is_same_v< function_remove_cvref_t<void() const &>,
+                                              void() >
+  );
 ```
 
->Other setters take type arguments, e.g. to change function signature types:
+>Some property traits act as `remove_*` traits; the 'signature' property trait  
+effectively removes both cvref and noexcept:
 
 ```c++
-    static_assert( std::is_same_v< void(),
-                     function<int()>::set_return_type_t<void> >);
+  static_assert(
+      std::is_same_v< function_signature_t<void() & noexcept>,
+                                           void() >
+  );
+```
+
+>`set_*` traits are more programmatic than `add_*` and `remove_*` traits.  
+Setters for function cv qualifiers, noexcept and variadic take `bool` arguments:
+
+```c++
+  static_assert( function_is_noexcept_v<
+                    function_set_noexcept_t<void(), true> >);
+```
+
+>Setters for reference qualifiers take `ltl::ref_qual_v` arguments  
+(an enum type with values `lval_ref_v`, `rval_ref_v` or `ref_qual_v{}`)
+
+```c++
+    static_assert(
+       std::is_same_v< function_set_reference_t<void() &, rval_ref_v>
+                                                void() && >
+    );
+```
+
+>There are no `add` traits for function reference qualifiers because the 'add'  
+in `std::add_rvalue_reference` imples reference collapse such that 'adding'  
+an rvalue reference to an lvalue reference gives an lvalue reference; `&` + `&&` => `&`  
+(reference collapse is not necessarily natural for function reference qualifiers).  
+Instead, there are `function_set_reference_lvalue` / `_rvalue` traits  
+(read as "given a function type, set its reference qualifier to lvalue reference")  
+(unlike other setters, they take no arguments).
+
+>Setters for type properties take type arguments; to change function return type:
+
+```c++
+    static_assert(
+       std::is_same_v< function_set_return_type_t<int(), void>,
+                                                  void() >);
 ```
 
 >`set_*_as` traits provide a way to copy properties to the target function type  
 from a source function type template argument - e.g. to copy cvref qualifiers:
 
 ```c++
-    static_assert( std::is_same_v< void() &,
-                     function<void()>::set_cvref_as_t<int() &> >);
-```
-
->Conventional `add_*`, `remove_*` traits are also provided, taking no arguments:
-
-```c++
-    static_assert( std::is_same_v< void(),
-                     function<void() const &>::remove_cvref_t >);
+    static_assert( std::is_same_v<
+                     function_set_cvref_as_t<void() const, int() &>,
+                                             void() & >);
 ```
 
 </b></details>
 
-An example application using some function_traits:
+### A small example of function_traits usage
+
+<details><summary>A somewhat contrived example...</summary>
+
+An illustrative example that type-checks logger member functions,  
+with `printf`-like signature that may or may not be variadic, then forwards  
+a C++ argument pack to the C varargs (the vargs are not type checked here -  
+they could be matched at compile time against the format string...).
 
 ```cpp
 #include <tuple>
@@ -401,3 +443,5 @@ int logger(F C::* log_mf, Vargs... vargs) noexcept
 template int logger(decltype(&Log0::log));
 template int logger(decltype(&LogV::log),int);
 ```
+
+</details>

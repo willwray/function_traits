@@ -2,10 +2,10 @@
 
 ## Type traits for properties of C++ function types
 
-* `R(P...`[`,...`]`)` [`const`] [`volatile`] [`&`|`&&`] `noexcept(X)`
+* **`R(P...`[`,...`]`)` [`const`] [`volatile`] [`&`|`&&`] `noexcept(X)`**
 
-This is the general form of a C++ function type (including `noexcept` since C++17)  
-templated with <typename `R`, typename... `P`, bool `X`>:
+This is the anatomy of a general C++17 function type  
+templated with **`<typename R, typename... P, bool X>`**:
 
 * **`R(P...)`** : Function '**signature**'; **return** type **`R`**, **parameter** types **`P...`**, and
 * `R(P...,`**`...`**`)` : existence of C-style **varargs** (denoted by trailing ellipsis **`...`**)
@@ -91,7 +91,8 @@ DEALINGS IN THE SOFTWARE.
 No more, no less; it does not provide traits for general [Callable](https://en.cppreference.com/w/cpp/named_req/Callable) types -  
 (function traits can ease implementation of facilities like callable traits).
 >
->It depends on std `<type_traits>` which it complements with function traits.
+>It depends on std `<type_traits>` which it complements with function traits.  
+The library uses `namespace ltl` for its traits, types and functions.
 >
 >It is an 'alpha' design with an experimental interface, subject to change.  
 It targets C++17 on recent gcc / clang / msvc compilers.  
@@ -151,7 +152,7 @@ a possibly abominable or variadic function type:
 This library provides the specializations wrapped up as function traits.
 >
 >### Copy traits
->I wanted a trait to copy qualifiers from source to target function types<sup>1</sup>.  
+>I wanted traits to copy qualifiers from source to target function types<sup>1</sup>.  
 Since all 24/48 specializations are needed to implement *any* function trait  
 with full generality, one might as well write a full collection of traits.
 >
@@ -412,14 +413,15 @@ Setters for function cv qualifiers, noexcept and variadic take `bool` arguments:
     );
 ```
 
->There are no `add` traits for function reference qualifiers because the 'add'  
-in `std::add_rvalue_reference` imples reference collapse such that 'adding'  
-an rvalue reference to an lvalue reference gives an lvalue reference; `&` + `&&` => `&`  
-(reference collapse is not necessarily natural for function reference qualifiers).
->
->Instead, there are `function_set_reference_lvalue` / `_rvalue` traits  
+>There is a `function_add_reference<F,R>` trait that does reference collapse  
+such that 'adding' an rvalue-ref to an lvalue-ref gives an lvalue-ref, just like  
+`std::add_rvalue_reference` for object types, `&` + `&&` => `&`, even though  
+reference collapse is not necessarily natural for function reference qualifiers.
+
+>There are no `function_add_reference_lvalue` / `_rvalue` traits.  
+Instead, there are `function_set_reference_lvalue` / `_rvalue` traits  
 (read as "given a function type, set its reference qualifier to lvalue reference")  
-(unlike other setters, they take no arguments).
+(unlike other setters, but like `add` traits, they take no arguments).
 >
 >Setters for type properties take type arguments; to change function return type:
 

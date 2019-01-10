@@ -1,85 +1,94 @@
+// Copyright 2019 Will Wray. Distributed under Boost Software License, V1.0.
+// See repo: https://github.com/willwray/function_traits
+
 #include <type_traits>
 
 /*
-   "function_traits.hpp": function signature, cvref and noexcept traits
-    ^^^^^^^^^^^^^^^^^^^
-        Type trait: A compile-time template-based interface to
-                      query or modify the properties of types.
+  "function_traits.hpp": function signature, cvref and noexcept traits
+   ^^^^^^^^^^^^^^^^^^^
+       Type trait: A compile-time template-based interface to
+                     query or modify the properties of types.
 
-    This header provides traits for C++ function types:
+   This header provides traits for C++ function types:
 
-      - Function signature:  R(P...) or R(P..., ...)
-          - Return type      R
-          - Parameter types    P...
-          - Presence of variadic parameter pack ...
-            ...C-style trailing elipsis: 2 combinations
+     - Function signature:  R(P...) or R(P..., ...)
+         - Return type      R
+         - Parameter types    P...
+         - Presence of variadic parameter pack ...
+           ...C-style trailing elipsis: 2 combinations
 
-      - Function cvref qualifiers       12 combinations total:
-          - cv:  const and/or volatile   4 combinations
-          - ref: lvalue & or rvalue &&  x3 combinations
+     - Function cvref qualifiers       12 combinations total:
+         - cv:  const and/or volatile   4 combinations
+         - ref: lvalue & or rvalue &&  x3 combinations
 
-      - Function exception specification:
-         - noexcept(bool): true|false    2 combinations
+     - Function exception specification:
+        - noexcept(bool): true|false    2 combinations
 
-    Function 'signature' here refers to return type R and parameters P...
-    (with optional C-style varargs but without qualifiers and noexcept):
+   Function 'signature' here refers to return type R and parameters P...
+   (with optional C-style varargs but without qualifiers and noexcept):
 
-      function_signature_t<F> // removes cvref qualifiers and noexcept
+     function_signature_t<F> // removes cvref qualifiers and noexcept
 
-    Function types with cvref qualifiers are 'abominable' (see doc refs).
-    To test if function type F is cvref qualified use predicate trait:
+   This library follows std trait conventions:
 
-      function_is_cvref_v<F> // true if any c,v or ref qualifier present
+     '_t' suffix for result type   (the trait is a type alias template)
+     '_v' suffix for result value  (the trait is a variable template)
+      no suffix for a result class (the trait is a class template
+                                    with 'type' or 'value' member)
 
-    This library follows std trait conventions:
+   Function types with cvref qualifiers are 'abominable' (see doc refs).
+   To test if function type F is cvref qualified use predicate trait:
 
-      '_t' suffix for result type   (the trait is a type alias template)
-      '_v' suffix for result value  (the trait is a variable template)
-       no suffix for a result class (the trait is a class template
-                                     with 'type' or 'value' member)
-    no suffix e.g.:
-      function_is_cvref<F> // class inherited from std::bool_constant<?>
+     function_is_cvref<F> // class inherited from std::bool_constant<?>
+     function_is_cvref_v<F> // true if any c,v or ref qualifier present
 
-    Conventional 'add' and 'remove' traits mutate their named trait:
+   To test if a type T is a function type that is not cvref qualified:
 
-      function_add_noexcept_t<F> // add noexcept specifier
-      function_remove_cvref_t<F> // remove all cv and ref qualifiers
-                                 // leaving signature and exception spec
+     is_free_function_v<T> // is_function_v<T> && !function_is_cvref<T>
 
-    Unconventionally, this library also provides transforming / mutating
-    'set' traits that take extra template arguments, e.g.:
+   This is the only function_trait that can be 'called' on any type.  
 
-      function_set_noexcept_t<F,B>  // set noexcept(B) for bool const B
-      function_set_signature_t<F,S> // set S as the function signature
-                                    // keeping cvref-nx of function F
 
-    Reference qualifiers are represented by an enum type ref_qual_v:
+   Conventional 'add' and 'remove' traits modify their named trait:
 
-      - ref_qual_v{}  no reference qualifier
-      - lval_ref_v    lvalue reference qualifier: &
-      - rval_ref_v    rvalue reference qualifier: &&
+     function_add_noexcept_t<F> // add noexcept specifier
+     function_remove_cvref_t<F> // remove all cv and ref qualifiers
+                                // leaving signature and exception spec
 
-    Template function reference_v<T> returns the reference type of T:
+   Unconventionally, this library also provides transforming / mutating
+   'set' traits that take extra template arguments, e.g.:
 
-      reference_v<T>() -> ref_qual_v
+     function_set_noexcept_t<F,B>  // set noexcept(B) for bool const B
+     function_set_signature_t<F,S> // set S as the function signature
+                                   // keeping cvref-nx of function F
 
-    The 'set_reference' traits then allow to copy between function types:
+   Reference qualifiers are represented by an enum type ref_qual_v:
 
-      function_set_reference<F, reference_v<G>()> // copy G ref qual to F
+     - ref_qual_v{}  no reference qualifier
+     - lval_ref_v    lvalue reference qualifier: &
+     - rval_ref_v    rvalue reference qualifier: &&
 
-      function_set_reference<F, lval_ref_v>   // set ref qual to &
-      function_set_reference_lvalue<F>        // set ref qual to &
+   Template function reference_v<T> returns the reference type of T:
 
-      function_set_reference<F, ref_qual_v{}> // set ref qual to none
-      function_remove_reference<F>            // set ref qual to none
+     reference_v<T>() -> ref_qual_v
 
-    (There is no 'add_reference' because this may be taken to imply a
-     reference collapse semantic which does not apply to function types.)
+   The 'set_reference' traits then allow to copy between function types:
 
-    Copying all cvref qualifiers is verbose with 'set_cvref' so this is
-    provided as a 'set_cvref_as' trait:
+     function_set_reference<F, reference_v<G>()> // copy G ref qual to F
 
-      function_set_cvref_as_t<F,G> // copy cvref quals of G to F
+     function_set_reference<F, lval_ref_v>   // set ref qual to &
+     function_set_reference_lvalue<F>        // set ref qual to &
+
+     function_set_reference<F, ref_qual_v{}> // set ref qual to none
+     function_remove_reference<F>            // set ref qual to none
+
+   (There is no 'add_reference' because this may be taken to imply a
+    reference collapse semantic which does not apply to function types.)
+
+   Copying all cvref qualifiers is verbose with 'set_cvref' so this is
+   provided as a 'set_cvref_as' trait:
+
+     function_set_cvref_as_t<F,G> // copy cvref quals of G to F
 
 
   function<F>: class containing traits of function type F as members
@@ -103,14 +112,14 @@
 // GCC and Clang deduce noexcept via partial specialization
 // MSVC doesn't deduce yet (early 2019 V 15.9.4 Preview 1.0)
 #if defined(__GNUC__)
-#  define NOEXCEPT_DEDUCED
+#   define NOEXCEPT_DEDUCED
 #endif
 
 // Fallback macro switch for lack of noexcept deduction
 #if defined(NOEXCEPT_DEDUCED)
-#  define NO_NOEXCEPT_DEDUCTION(NON, ...) __VA_ARGS__
+#   define NOEXCEPT_EXPAND(NON, ...) __VA_ARGS__
 #else
-#  define NO_NOEXCEPT_DEDUCTION(NON, ...) NON
+#   define NOEXCEPT_EXPAND(NON, ...) NON
 #endif
 
 // Test noexcept deduction - compile fail if deduction fails
@@ -141,17 +150,27 @@ template <typename F> struct is_free_function
 
 // function<F> class: a collection of member traits for function type F
 //   or an incomplete type for non-function type F
-template <typename F> struct function;
+template <typename F> class function;
 
 // ref_qual_v: a value to represent a reference qualifier
 //   ref_qual_v{}  no reference qualifier
 //   lval_ref_v    lvalue reference qualifier: &
 //   rval_ref_v    rvalue reference qualifier: &&
-enum ref_qual_v { null_ref_v = 0, lval_ref_v = 1, rval_ref_v = 2 };
+enum ref_qual_v { null_ref_v, lval_ref_v, rval_ref_v };
+
+// ref_qual_v operator+( ref_qual_v, ref_qual_v)
+// 'adds' reference qualifiers with reference collapse
+constexpr ref_qual_v operator+( ref_qual_v a, ref_qual_v b)
+{
+  auto r = a|b;
+  return r==3 ? lval_ref_v : static_cast<ref_qual_v>(r);
+}
 
 // reference_v<T>() returns a ref_qual_v value representing
 //  the reference qualifier on type T (ordinary type or function type)
-template <typename T> constexpr ref_qual_v reference_v() {
+template <typename T>
+constexpr ref_qual_v reference_v()
+{
   if constexpr (std::is_function_v<T>) {
     using F = function<T>;
     return typename F::is_lvalue_reference()
@@ -167,9 +186,8 @@ template <typename T> constexpr ref_qual_v reference_v() {
 // with injected setter template set_cvref_nx and template member aliases
 template <template <bool, bool, ref_qual_v, bool> typename set_cvref_nx,
           bool c, bool v, ref_qual_v ref, bool nx>
-struct function_cvref_nx {
-  using quals_t = function_cvref_nx;
-
+struct function_cvref_nx
+{
   using is_const = std::bool_constant<c>;
   using is_volatile = std::bool_constant<v>;
   using is_lvalue_reference = std::bool_constant<ref == lval_ref_v>;
@@ -183,18 +201,18 @@ struct function_cvref_nx {
   template <bool C> using set_const_t = set_cvref_nx<C, v, ref, nx>;
   template <bool V> using set_volatile_t = set_cvref_nx<c, V, ref, nx>;
   template <bool C, bool V> using set_cv_t = set_cvref_nx<C, V, ref, nx>;
-  template <ref_qual_v Ref> using set_reference_t = set_cvref_nx<c, v, Ref, nx>;
-  template <bool C, bool V, ref_qual_v Ref = ref_qual_v{}>
-  using set_cvref_t = set_cvref_nx<C, V, Ref, nx>;
+  template <ref_qual_v R> using set_reference_t = set_cvref_nx<c, v, R, nx>;
+  template <bool C, bool V, ref_qual_v R = ref_qual_v{}>
+  using set_cvref_t = set_cvref_nx<C, V, R, nx>;
   template <bool NX> using set_noexcept_t = set_cvref_nx<c, v, ref, NX>;
 
   template <bool C> using set_const = function<set_const_t<C>>;
   template <bool V> using set_volatile = function<set_volatile_t<V>>;
   template <bool C, bool V> using set_cv = function<set_cv_t<C, V>>;
-  template <ref_qual_v Ref>
-  using set_reference = function<set_reference_t<Ref>>;
-  template <bool C, bool V, ref_qual_v Ref = ref_qual_v{}>
-  using set_cvref = function<set_cvref_t<C, V, Ref>>;
+  template <ref_qual_v R>
+  using set_reference = function<set_reference_t<R>>;
+  template <bool C, bool V, ref_qual_v R = ref_qual_v{}>
+  using set_cvref = function<set_cvref_t<C, V, R>>;
   template <bool NX> using set_noexcept = function<set_noexcept_t<NX>>;
 };
 
@@ -205,7 +223,7 @@ template <typename...> struct function_parameter_types;
 //   R(P...)     - return type R, parameter types P..., or
 //   R(P...,...) - with a trailing variadic parameter pack ...
 // but not including any function cvref qualifiers or noexcept specifier.
-template <typename F> struct function_base;
+template <typename F> class function_base;
 
 // A macro definition is used to expand non-variadic and variadic signatures.
 // Clang warns when a variadic signature omits the comma; R(P... ...), so
@@ -213,121 +231,120 @@ template <typename F> struct function_base;
 // (C++20's __VA_OPT__(,...) is another way to expand with leading comma).
 
 // function_base<F> specialisations for non-variadic and variadic signatures
-#define FUNCTION_BASE(...)                                                     \
-  template <typename R, typename... P>                                         \
-  struct function_base<R(P... __VA_ARGS__)> {                                  \
-    using signature_t = R(P... __VA_ARGS__);                                   \
-    using signature_noexcept_t = R(P... __VA_ARGS__) noexcept;                 \
-                                                                               \
-    using is_variadic = std::bool_constant<#__VA_ARGS__[0]>;                   \
-                                                                               \
-    template <bool V>                                                          \
-    using set_variadic_t = std::conditional_t<V, R(P..., ...), R(P...)>;       \
-                                                                               \
-    using return_type = R;                                                     \
-    template <typename r> using set_return_type_t = r(P... __VA_ARGS__);       \
-                                                                               \
-    template <template <typename...> typename T> using args_t = T<P...>;       \
-                                                                               \
-    template <bool, bool, ref_qual_v, bool> struct set_cvref_nx;               \
-                                                                               \
-    template <bool nx> struct set_cvref_nx<0, 0, ref_qual_v{}, nx> {           \
-      using type = R(P... __VA_ARGS__) noexcept(nx);                           \
-    };                                                                         \
-    template <bool nx> struct set_cvref_nx<1, 0, ref_qual_v{}, nx> {           \
-      using type = R(P... __VA_ARGS__) const noexcept(nx);                     \
-    };                                                                         \
-    template <bool nx> struct set_cvref_nx<0, 1, ref_qual_v{}, nx> {           \
-      using type = R(P... __VA_ARGS__) volatile noexcept(nx);                  \
-    };                                                                         \
-    template <bool nx> struct set_cvref_nx<1, 1, ref_qual_v{}, nx> {           \
-      using type = R(P... __VA_ARGS__) const volatile noexcept(nx);            \
-    };                                                                         \
-                                                                               \
-    template <bool nx> struct set_cvref_nx<0, 0, lval_ref_v, nx> {             \
-      using type = R(P... __VA_ARGS__) & noexcept(nx);                         \
-    };                                                                         \
-    template <bool nx> struct set_cvref_nx<1, 0, lval_ref_v, nx> {             \
-      using type = R(P... __VA_ARGS__) const &noexcept(nx);                    \
-    };                                                                         \
-    template <bool nx> struct set_cvref_nx<0, 1, lval_ref_v, nx> {             \
-      using type = R(P... __VA_ARGS__) volatile &noexcept(nx);                 \
-    };                                                                         \
-    template <bool nx> struct set_cvref_nx<1, 1, lval_ref_v, nx> {             \
-      using type = R(P... __VA_ARGS__) const volatile &noexcept(nx);           \
-    };                                                                         \
-                                                                               \
-    template <bool nx> struct set_cvref_nx<0, 0, rval_ref_v, nx> {             \
-      using type = R(P... __VA_ARGS__) && noexcept(nx);                        \
-    };                                                                         \
-    template <bool nx> struct set_cvref_nx<1, 0, rval_ref_v, nx> {             \
-      using type = R(P... __VA_ARGS__) const &&noexcept(nx);                   \
-    };                                                                         \
-    template <bool nx> struct set_cvref_nx<0, 1, rval_ref_v, nx> {             \
-      using type = R(P... __VA_ARGS__) volatile &&noexcept(nx);                \
-    };                                                                         \
-    template <bool nx> struct set_cvref_nx<1, 1, rval_ref_v, nx> {             \
-      using type = R(P... __VA_ARGS__) const volatile &&noexcept(nx);          \
-    };                                                                         \
-                                                                               \
-    template <bool c, bool v, ref_qual_v ref, bool nx>                         \
-    using set_cvref_noexcept_t = typename set_cvref_nx<c, v, ref, nx>::type;   \
-  };
+#define FUNCTION_BASE(...)                                             \
+template <typename R, typename... P>                                   \
+class function_base<R(P... __VA_ARGS__)>                               \
+{                                                                      \
+ public:                                                               \
+  using return_type_t = R;                                             \
+  using signature_t = R(P... __VA_ARGS__);                             \
+  using signature_noexcept_t = R(P... __VA_ARGS__) noexcept;           \
+  using is_variadic = std::bool_constant<bool(#__VA_ARGS__[0])>;       \
+  template <template <typename...> typename T> using args_t = T<P...>; \
+ private:\
+  template <typename T> struct id { using type = T; };\
+  template <bool c, bool v, ref_qual_v r, bool nx>\
+  static constexpr auto setcvrnx()\
+  {\
+    if constexpr (r == null_ref_v) {\
+      if constexpr(!v) {\
+        if constexpr(!c)\
+          return id<R(P... __VA_ARGS__) noexcept(nx)>{};\
+        else\
+          return id<R(P... __VA_ARGS__) const noexcept(nx)>{};\
+      } else {\
+        if constexpr(!c)\
+          return id<R(P... __VA_ARGS__) volatile noexcept(nx)>{};\
+        else\
+          return id<R(P... __VA_ARGS__) const volatile noexcept(nx)>{};\
+      }\
+    } else if constexpr (r == lval_ref_v) {\
+      if constexpr(!v) {\
+        if constexpr(!c)\
+          return id<R(P... __VA_ARGS__) & noexcept(nx)>{};\
+        else\
+          return id<R(P... __VA_ARGS__) const & noexcept(nx)>{};\
+      } else {\
+        if constexpr(!c)\
+          return id<R(P... __VA_ARGS__) volatile & noexcept(nx)>{};\
+        else\
+          return id<R(P... __VA_ARGS__) const volatile & noexcept(nx)>{};\
+      }\
+    } else {\
+      if constexpr(!v) {\
+        if constexpr(!c)\
+          return id<R(P... __VA_ARGS__) && noexcept(nx)>{};\
+        else\
+          return id<R(P... __VA_ARGS__) const && noexcept(nx)>{};\
+      } else {\
+        if constexpr(!c)\
+          return id<R(P... __VA_ARGS__) volatile && noexcept(nx)>{};\
+        else\
+          return id<R(P... __VA_ARGS__) const volatile && noexcept(nx)>{};\
+      }\
+    }\
+  }\
+ public:\
+  template <bool c, bool v, ref_qual_v r, bool nx>                           \
+  using set_cvref_noexcept_t = typename decltype(setcvrnx<c,v,r,nx>())::type;\
+};
 FUNCTION_BASE()
-FUNCTION_BASE(, ...) // leading comma forwarded via macro varargs
+FUNCTION_BASE(,...) // leading comma forwarded via macro varargs
 #undef FUNCTION_BASE
 
 // CV_REF_QUALIFIERS(...)
-// X-macro list to expand the 12 cv-ref combos, and ...
+// X-macro list to expand the 12 cv-ref combos, and
+//   pass through X; optional true|false noexcept(bool) specification, and ...
 //   ... varargs to pass through C/C++ varargs (inluding a leading comma)
-#define CV_REF_QUALIFIERS(...)           \
-  CV_REF(, , __VA_ARGS__)                \
-  CV_REF(, &, __VA_ARGS__)               \
-  CV_REF(, &&, __VA_ARGS__)              \
-  CV_REF(const, , __VA_ARGS__)           \
-  CV_REF(const, &, __VA_ARGS__)          \
-  CV_REF(const, &&, __VA_ARGS__)         \
-  CV_REF(volatile, , __VA_ARGS__)        \
-  CV_REF(volatile, &, __VA_ARGS__)       \
-  CV_REF(volatile, &&, __VA_ARGS__)      \
-  CV_REF(const volatile, , __VA_ARGS__)  \
-  CV_REF(const volatile, &, __VA_ARGS__) \
-  CV_REF(const volatile, &&, __VA_ARGS__)
+#define CV_REF_QUALIFIERS(X, ...)           \
+  CV_REF(, , X, __VA_ARGS__)                \
+  CV_REF(, &, X, __VA_ARGS__)               \
+  CV_REF(, &&, X, __VA_ARGS__)              \
+  CV_REF(const, , X, __VA_ARGS__)           \
+  CV_REF(const, &, X, __VA_ARGS__)          \
+  CV_REF(const, &&, X, __VA_ARGS__)         \
+  CV_REF(volatile, , X, __VA_ARGS__)        \
+  CV_REF(volatile, &, X, __VA_ARGS__)       \
+  CV_REF(volatile, &&, X, __VA_ARGS__)      \
+  CV_REF(const volatile, , X, __VA_ARGS__)  \
+  CV_REF(const volatile, &, X, __VA_ARGS__) \
+  CV_REF(const volatile, &&, X, __VA_ARGS__)
 
-// X-macro list to expand all 48 cv,ref,noexcept,variadic combos
-#define CV_REF_QUALIFIERS_VARIAD         \
-  CV_REF_QUALIFIERS()                    \
-  CV_REF_QUALIFIERS(, ...) // leading comma for variadic match
-
-#define CV_REF(CV, REF, ...)                                                   \
-  template <bool NX, typename R, typename... P>                                \
-  struct function<R(P... __VA_ARGS__) CV REF noexcept(NX)>                     \
-      : function_base<R(P... __VA_ARGS__)>,                                    \
-        function_cvref_nx<                                                     \
-            function_base<R(P... __VA_ARGS__)>::template set_cvref_noexcept_t, \
-            std::is_const_v<int CV>, std::is_volatile_v<int CV>,               \
-            reference_v<int REF>(), NX> {                                      \
-    using type = R(P... __VA_ARGS__) CV REF noexcept(NX);                      \
-    using remove_cvref_t = R(P... __VA_ARGS__) noexcept(NX);                   \
-                                                                               \
-    template <bool V>                                                          \
-    using set_variadic_t =                                                     \
-        std::conditional_t<V, R(P..., ...) CV REF noexcept(NX),                \
-                           R(P...) CV REF noexcept(NX)>;                       \
-                                                                               \
-    template <typename> struct set_signature;                                  \
-    template <typename r, typename... p> struct set_signature<r(p...)> {       \
-      using type = r(p...) CV REF noexcept(NX);                                \
-    };                                                                         \
-    template <typename r, typename... p> struct set_signature<r(p..., ...)> {  \
-      using type = r(p..., ...) CV REF noexcept(NX);                           \
-    };                                                                         \
-    template <typename B>                                                      \
-    using set_signature_t = typename set_signature<B>::type;                   \
-  };
-CV_REF_QUALIFIERS_VARIAD
+#define CV_REF(CV,REF,NX,...)                                                \
+template <typename R, typename... P NOEXCEPT_EXPAND(,,bool X)>               \
+class function<R(P... __VA_ARGS__) CV REF noexcept(NOEXCEPT_EXPAND(NX,X))>   \
+    : public function_base<R(P... __VA_ARGS__)>,                             \
+      public function_cvref_nx<                                              \
+          function_base<R(P... __VA_ARGS__)>::template set_cvref_noexcept_t, \
+          std::is_const_v<int CV>, std::is_volatile_v<int CV>,               \
+          reference_v<int REF>(), NOEXCEPT_EXPAND(NX,X)>                     \
+{                                                                            \
+  enum : bool { nx = NOEXCEPT_EXPAND(NX,X) };                                \
+public:                                                                      \
+  using type = R(P... __VA_ARGS__) CV REF noexcept(nx);                      \
+  using remove_cvref_t = R(P... __VA_ARGS__) noexcept(nx);                   \
+  template <typename r> using set_return_type_t = r(P... __VA_ARGS__);       \
+  template <bool V> using set_variadic_t = std::conditional_t<V,             \
+      R(P..., ...) CV REF noexcept(nx), R(P...) CV REF noexcept(nx)>;        \
+  template <typename> struct set_signature;                                  \
+  template <typename r, typename... p> struct set_signature<r(p...)> {       \
+    using type = r(p...) CV REF noexcept(nx); };                             \
+  template <typename r, typename... p> struct set_signature<r(p..., ...)> {  \
+    using type = r(p..., ...) CV REF noexcept(nx); };                        \
+  template <typename B>                                                      \
+  using set_signature_t = typename set_signature<B>::type;                   \
+};
+// X-macro list to expand all 24 or 48 variadic,cv,ref,[noexcept] combos
+#if defined(NOEXCEPT_DEDUCED)
+  CV_REF_QUALIFIERS(,)
+  CV_REF_QUALIFIERS(, ,...) // leading comma for variadic match
+#else
+  CV_REF_QUALIFIERS(true,)
+  CV_REF_QUALIFIERS(true, ,...) // leading comma for variadic match
+  CV_REF_QUALIFIERS(false,)
+  CV_REF_QUALIFIERS(false, ,...) // leading comma for variadic match
+#endif
 #undef CV_REF
-#undef CV_REF_QUALIFIERS_VARIAD
 
 #define FUNCTION_PREDICATE_PROPERTIES                                                       \
   X(const)                                                                     \
@@ -403,13 +420,12 @@ using function_set_reference_rvalue = function_set_reference<F, rval_ref_v>;
 template <typename F>
 using function_set_reference_rvalue_t = function_set_reference_t<F, rval_ref_v>;
 
-/*
-// add reference should do reference-collapsing
-template <typename F>
-using function_add_reference = function_set_reference<F,true>;
-template <typename F>
-using function_add_reference_t = function_set_reference_t<F,true>;
-*/
+// add reference does reference-collapsing
+template <typename F, ref_qual_v R>
+using function_add_reference = function_set_reference<F,reference_v<F>()+R>;
+template <typename F, ref_qual_v R>
+using function_add_reference_t = function_set_reference_t<F,reference_v<F>()+R>;
+
 template <typename F>
 using function_remove_reference = function_set_reference<F, ref_qual_v{}>;
 template <typename F>
@@ -471,7 +487,7 @@ using function_remove_variadic_t = function_set_variadic_t<F, false>;
 
 // return_type
 template <typename F>
-using function_return_type_t = typename function<F>::return_type;
+using function_return_type_t = typename function<F>::return_type_t;
 template <typename F> struct function_return_type {
   using type = function_return_type_t<F>;
 };
@@ -513,4 +529,4 @@ using function_args_t = typename function<F>::template args_t<T>;
 } // namespace ltl
 
 #undef NOEXCEPT_DEDUCED
-#undef NO_NOEXCEPT_DEDUCTION
+#undef NOEXCEPT_EXPAND

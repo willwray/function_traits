@@ -403,7 +403,7 @@ Setters for function cv qualifiers, noexcept and variadic take `bool` arguments:
                     function_set_noexcept_t<void(), true> >);
 ```
 
->Setters for reference qualifiers take `ltl::ref_qual_v` arguments  
+>The `set` trait for reference qualifiers takes a `ltl::ref_qual_v` argument  
 (an enum type with values `lval_ref_v`, `rval_ref_v` or `ref_qual_v{}`)
 
 ```c++
@@ -414,10 +414,10 @@ Setters for function cv qualifiers, noexcept and variadic take `bool` arguments:
 ```
 
 >There is a `function_add_reference<F,R>` trait that does reference collapse  
-such that 'adding' an rvalue-ref to an lvalue-ref gives an lvalue-ref, just like  
+such that 'adding' an rvalue-ref to an lvalue-ref gives an lvalue-ref, consistent with  
 `std::add_rvalue_reference` for object types, `&` + `&&` => `&`, even though  
 reference collapse is not necessarily natural for function reference qualifiers.
-
+>
 >There are no `function_add_reference_lvalue` / `_rvalue` traits.  
 Instead, there are `function_set_reference_lvalue` / `_rvalue` traits  
 (read as "given a function type, set its reference qualifier to lvalue reference")  

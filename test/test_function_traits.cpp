@@ -2,20 +2,45 @@
 
 template <typename> struct wotype;
 
-static_assert( ltl::reference_v<int>() == ltl::ref_qual_v{} );
+// Check that ref_qual_v addition does reference collapse
+static_assert( ltl::null_ref_v + ltl::null_ref_v == ltl::null_ref_v );
+static_assert( ltl::null_ref_v + ltl::lval_ref_v == ltl::lval_ref_v );
+static_assert( ltl::null_ref_v + ltl::rval_ref_v == ltl::rval_ref_v );
+
+static_assert( ltl::lval_ref_v + ltl::null_ref_v == ltl::lval_ref_v );
+static_assert( ltl::lval_ref_v + ltl::lval_ref_v == ltl::lval_ref_v );
+static_assert( ltl::lval_ref_v + ltl::rval_ref_v == ltl::lval_ref_v );
+
+static_assert( ltl::rval_ref_v + ltl::null_ref_v == ltl::rval_ref_v );
+static_assert( ltl::rval_ref_v + ltl::lval_ref_v == ltl::lval_ref_v );
+static_assert( ltl::rval_ref_v + ltl::rval_ref_v == ltl::rval_ref_v );
+
+// Check reference_v<T> function
+static_assert( ltl::reference_v<int>() == ltl::null_ref_v );
+static_assert( ltl::reference_v<void>() == ltl::null_ref_v );
 static_assert( ltl::reference_v<int&>() == ltl::lval_ref_v );
 static_assert( ltl::reference_v<int&&>() == ltl::rval_ref_v );
 
-static_assert( ltl::reference_v<int()>() == ltl::ref_qual_v{} );
+static_assert( ltl::reference_v<int()>() == ltl::null_ref_v );
+static_assert( ltl::reference_v<void()>() == ltl::null_ref_v );
 static_assert( ltl::reference_v<int()&>() == ltl::lval_ref_v );
 static_assert( ltl::reference_v<int()&&>() == ltl::rval_ref_v );
+static_assert( ltl::reference_v<void() volatile& noexcept>()
+                                           == ltl::lval_ref_v );
 
+
+// Test is_free_function trait
+static_assert( ! ltl::is_free_function_v<void> );
 static_assert( ! ltl::is_free_function_v<int> );
 static_assert( ! ltl::is_free_function_v<int() &> );
 static_assert( ! ltl::is_free_function_v<int() const> );
+
 static_assert( ltl::is_free_function_v<int()> );
+//static_assert( ltl::is_free_function_v<void(*)()> );
+
 
 using fir = ltl::function_is_reference<int>;
+stat
 //static_assert( not ltl::function_is_reference_v<int> );
 
 using fv = void();

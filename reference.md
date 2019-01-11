@@ -11,13 +11,31 @@ The predicate member traits are aliases of `bool_constant<?>`
 |----|----|
 |`function<F>::is_*` == `bool_constant<?>`<br>`function<F>::is_*()`= `bool{?}`<hr>`function_is_*<F> : bool_constant<?>`<br>`function_is_*_v<F>` = `bool{?}`|<br><br>`is_*_member<F> : bool_constant<?>`<br>`is_*_member_v<F>` = `bool{?}`|
 
-## **Predicate** traits
-The predicate traits test true/false properties of function types.
-<br>They are provided as member traits as well as standalone traits.
+## function_traits and P0172 equivalent
 
+<details><summary><b>Predicate</b> traits</summary>
+
+Predicate traits test a true-or-false property of a type  
+returning a type derived from [`std::bool_constant`](https://en.cppreference.com/w/cpp/types/integral_constant)  
+i.e. inherited from `std::true_type` or `std::false_type`  
+
+The bool value itself can be extracted from the `bool_constant`  
+via its `value` member or by invoking its function call operator.  
+Alternatively, a `_v` suffix defines a templated boolean variable -  
+i.e. `is_*_v` directly gives `true` or `false` value for property `*`.  
+For example, these are all equivalent:
+
+    function_is_noexcept<F>::value
+    function_is_noexcept<F>()
+    function_is_noexcept_v<F>
 
 |function_trait\<F\>  | P0172R0 / callable_trait\<F\>  |
 |----|----|
+|`is_free_function<F>`|`not has_member_qualifiers<F>`|
+
+|function_trait\<F\>  | P0172R0 / callable_trait\<F\>  |
+|----|----|
+|`is_free_function<F>`|`not has_member_qualifiers<F>`|
 |`function_is_const<F>`|`is_const_member<F>`|
 |`function_is_volatile<F>`|`is_volatile_member<F>`|
 |`function_is_cv<F>` (Note: const *OR* volatile)| `is_cv_member<F>` (Note: const *AND* volatile)|
@@ -28,10 +46,10 @@ The predicate traits test true/false properties of function types.
 |`function_is_noexcept<F>`|`is_noexcept<F>`|
 |`function_is_variadic<F>`|`has_varargs<F>`|
 
+</details>
 
+<details><summary><b>Modifying traits</b>: add | remove</summary>
 
-
----
 |function_trait\<F\>  | P0172R0 / callable_trait\<F\>  |
 |----|----|
 |`function_add_const<F>`<br>`function_set_const<F,true>`<br>`function_set_cv<F,true,false>`|`add_member_const<F>`|
@@ -60,3 +78,5 @@ The predicate traits test true/false properties of function types.
 ||`add_transaction_safe<F>`|
 ||`class_of<F>`|
 ||`apply_member_pointer<F>`|
+
+</details>

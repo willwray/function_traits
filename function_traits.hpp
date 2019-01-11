@@ -165,16 +165,16 @@ constexpr ref_qual_v operator+( ref_qual_v a, ref_qual_v b)
 template <typename T>
 constexpr ref_qual_v reference_v()
 {
-	if constexpr (std::is_function_v<T>) {
-		using F = function_traits<T>;
-		return typename F::is_lvalue_reference()
-			? lval_ref_v
-			: typename F::is_rvalue_reference() ? rval_ref_v : ref_qual_v{};
-	}
-	else
-		return std::is_lvalue_reference_v<T>
-		? lval_ref_v
-		: std::is_rvalue_reference_v<T> ? rval_ref_v : ref_qual_v{};
+  if constexpr (std::is_function_v<T>) {
+    using F = function_traits<T>;
+    return typename F::is_lvalue_reference()
+              ? lval_ref_v
+              : typename F::is_rvalue_reference() ? rval_ref_v : ref_qual_v{};
+    } else {
+      return std::is_lvalue_reference_v<T>
+              ? lval_ref_v
+              : std::is_rvalue_reference_v<T> ? rval_ref_v : ref_qual_v{};
+    }
 }
 
 namespace impl
@@ -192,7 +192,7 @@ struct function_cvref_nx
   using is_noexcept = std::bool_constant<nx>;
 
   using is_cv = std::bool_constant<c || v>;  // Note: const OR volatile
-  using is_reference = std::bool_constant<bool(ref)>;
+  using is_reference = std::bool_constant<ref != null_ref_v>;
   using is_cvref = std::bool_constant<c || v || ref != null_ref_v>;
 
   template <bool C> using set_const_t = set_cvref_nx<C, v, ref, nx>;
@@ -233,9 +233,9 @@ class function_base<R(P...__VA_ARGS__)>                                \
  public:                                                               \
   using return_type_t = R;                                             \
   using signature_t = R(P...__VA_ARGS__);                              \
-  using signature_noexcept_t = R(P...__VA_ARGS__) noexcept;            \
   using is_variadic = std::bool_constant<bool(#__VA_ARGS__[0])>;       \
-  template <template <typename...> typename T> using args_t = T<P...>; \
+  template <template <typename...> typename T=function_parameter_types>\
+  using args_t = T<P...>; \
  private:\
   template <typename T> struct id { using type = T; };\
   template <bool c, bool v, ref_qual_v r, bool nx>\
@@ -302,17 +302,17 @@ class function_traits<R(P...__VA_ARGS__) CV REF noexcept(NOEXCEPT_ND(NX,X))> \
           reference_v<int REF>(), NOEXCEPT_ND(NX,X)>                         \
 {                                                                            \
   enum : bool { nx = NOEXCEPT_ND(NX,X) };                                    \
+  template <typename> struct set_signature;                                  \
+  template <typename r, typename... p> struct set_signature<r(p...)> {       \
+    using type = r(p...) CV REF noexcept(nx); };                             \
+  template <typename r, typename... p> struct set_signature<r(p..., ...)> {  \
+    using type = r(p..., ...) CV REF noexcept(nx); };                        \
 public:                                                                      \
   using type = R(P...__VA_ARGS__) CV REF noexcept(nx);                       \
   using remove_cvref_t = R(P...__VA_ARGS__) noexcept(nx);                    \
   template <typename r> using set_return_type_t = r(P...__VA_ARGS__);        \
   template <bool V> using set_variadic_t = std::conditional_t<V,             \
       R(P..., ...) CV REF noexcept(nx), R(P...) CV REF noexcept(nx)>;        \
-  template <typename> struct set_signature;                                  \
-  template <typename r, typename... p> struct set_signature<r(p...)> {       \
-    using type = r(p...) CV REF noexcept(nx); };                             \
-  template <typename r, typename... p> struct set_signature<r(p..., ...)> {  \
-    using type = r(p..., ...) CV REF noexcept(nx); };                        \
   template <typename B>                                                      \
   using set_signature_t = typename set_signature<B>::type;                   \
 };
@@ -523,19 +523,11 @@ template <typename F, typename T> struct function_set_return_type {
   using type = function_set_return_type_t<F, T>;
 };
 
-// signature 'remove_cvref_noexcept'
+// signature, equivalent to 'remove_cvref_noexcept'
 template <typename F>
 using function_signature_t = typename function_traits<F>::signature_t;
 template <typename F>
 using function_signature = function_traits<function_signature_t<F>>;
-
-// signature_noexcept
-template <typename F>
-using function_signature_noexcept_t =
-    typename function_traits<F>::signature_noexcept_t;
-template <typename F>
-using function_signature_noexcept =
-    function_traits<function_signature_noexcept_t<F>>;
 
 // set_signature
 template <typename F, typename S>

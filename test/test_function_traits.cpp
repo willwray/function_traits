@@ -10,28 +10,28 @@ static_assert( ltl::reference_v<int()>() == ltl::ref_qual_v{} );
 static_assert( ltl::reference_v<int()&>() == ltl::lval_ref_v );
 static_assert( ltl::reference_v<int()&&>() == ltl::rval_ref_v );
 
-static_assert( not ltl::is_free_function_v<int> );
-static_assert( not ltl::is_free_function_v<int() &> );
-static_assert( not ltl::is_free_function_v<int() const> );
+static_assert( ! ltl::is_free_function_v<int> );
+static_assert( ! ltl::is_free_function_v<int() &> );
+static_assert( ! ltl::is_free_function_v<int() const> );
 static_assert( ltl::is_free_function_v<int()> );
 
 using fir = ltl::function_is_reference<int>;
 //static_assert( not ltl::function_is_reference_v<int> );
 
 using fv = void();
-using FV = ltl::function<fv>;
+using FV = ltl::function_traits<fv>;
 
-static_assert(not FV::is_const());
-static_assert(not FV::is_volatile());
-static_assert(not FV::is_cv());
-static_assert(not FV::is_lvalue_reference());
-static_assert(not FV::is_rvalue_reference());
-static_assert(not FV::is_reference());
-static_assert(not FV::is_cvref());
-static_assert(not FV::is_variadic());
+static_assert(! typename FV::is_const());
+static_assert(! typename FV::is_volatile());
+static_assert(! typename FV::is_cv());
+static_assert(! typename FV::is_lvalue_reference());
+static_assert(! typename FV::is_rvalue_reference());
+static_assert(! typename FV::is_reference());
+static_assert(! typename FV::is_cvref());
+static_assert(! typename FV::is_variadic());
 
-static_assert( ltl::function<void() noexcept>::is_noexcept());
-static_assert( ltl::function<void(...) noexcept>::is_noexcept());
+static_assert( ltl::function_traits<void() noexcept>::is_noexcept());
+static_assert( ltl::function_traits<void(...) noexcept>::is_noexcept());
 
 static_assert( ltl::function_is_const_v<void() const &>);
 static_assert(!ltl::function_is_const_v<void() volatile>);

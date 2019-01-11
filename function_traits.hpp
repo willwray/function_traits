@@ -165,16 +165,16 @@ constexpr ref_qual_v operator+( ref_qual_v a, ref_qual_v b)
 template <typename T>
 constexpr ref_qual_v reference_v()
 {
-  auto nlr = [](bool l, bool r) {
-    return l ? lval_ref_v : r ? rval_ref_v : null_ref_v;
-  };
-  if constexpr (std::is_function_v<T>) {
-    using F = function_traits<T>;
-    return nlr(typename F::is_lvalue_reference(),
-               typename F::is_rvalue_reference());
-  }
-  else return nlr(std::is_lvalue_reference<T>(),
-                  std::is_rvalue_reference<T>());
+	if constexpr (std::is_function_v<T>) {
+		using F = function_traits<T>;
+		return typename F::is_lvalue_reference()
+			? lval_ref_v
+			: typename F::is_rvalue_reference() ? rval_ref_v : ref_qual_v{};
+	}
+	else
+		return std::is_lvalue_reference_v<T>
+		? lval_ref_v
+		: std::is_rvalue_reference_v<T> ? rval_ref_v : ref_qual_v{};
 }
 
 namespace impl
@@ -192,7 +192,7 @@ struct function_cvref_nx
   using is_noexcept = std::bool_constant<nx>;
 
   using is_cv = std::bool_constant<c || v>;  // Note: const OR volatile
-  using is_reference = std::bool_constant<ref>;
+  using is_reference = std::bool_constant<bool(ref)>;
   using is_cvref = std::bool_constant<c || v || ref != null_ref_v>;
 
   template <bool C> using set_const_t = set_cvref_nx<C, v, ref, nx>;
@@ -369,7 +369,7 @@ FUNCTION_PREDICATE_PROPERTIES
 template <typename F>
 inline constexpr bool is_free_function_v = []{
          if constexpr(std::is_function_v<F>)
-           return ! typename function_traits<F>::is_cvref();
+           return !function_is_cvref_v<F>;
          return false; }();
 
 template <typename F> struct is_free_function

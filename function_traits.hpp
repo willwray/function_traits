@@ -3,7 +3,7 @@
 //   Distributed under the Boost Software License, Version 1.0.
 //          (http://www.boost.org/LICENSE_1_0.txt)
 //
-//    Repo: https://github.com/willwray/function_traits
+//   Repo: https://github.com/willwray/function_traits
 
 #include <type_traits>
 
@@ -169,15 +169,6 @@ constexpr ref_qual reference_v()
 
 namespace impl
 {
-// is_function implementation can be removed with C++20 concepts as it can
-// be implemented directly as = requires { sizeof(function_traits<T>); };
-template <typename T, typename = decltype(sizeof(int))>
-inline constexpr bool is_function_v = false;
-
-template <typename T>
-inline constexpr bool is_function_v<T,decltype(sizeof(function_traits<T>))>
-                                    = true;
-
 // function_cvref_nx<setter, c, v, ref, nx>
 // Convenience collection of type aliases for cvref & noexcept properties.
 // Injected setter template set_cvref_nx is used for template set_* aliases.
@@ -351,60 +342,130 @@ public:                                                                      \
 #undef NOEXCEPT_DEDUCED
 #undef NOEXCEPT_ND
 
+namespace impl
+{
+// is_function_v implementation uses the fact that sizeof incomplete type is
+// a language error, so can SFINAE overload or simply use requires in C++20
+// i.e. this SFINAE helper can be removed with C++20 concepts as it can
+// be implemented directly as = requires { sizeof(function_traits<T>); };
+//
+template <typename T, typename = decltype(sizeof(int))>
+inline constexpr bool is_function_v = false;
+
+template <typename T>
+inline constexpr bool is_function_v<T,decltype(sizeof(function_traits<T>))>
+                                    = true;
+struct empty_base {};
+
+template <template <typename> typename P, typename F>
+constexpr auto pred_base = []
+{
+  if constexpr (is_function_v<F>)
+    return (P<F>){};
+  return empty_base{};
+};
+
+template <template <typename> typename P, typename F>
+using predicate_base = decltype(pred_base<P,F>());
+} // namespace impl
 
 // Predicate traits for c,v,ref,noexcept,variadic properties
 
-template <typename F> struct function_is_const
-                : function_traits<F>::is_const {};
+// function_is_* are predicate type trait aliases to true_type / false_type
+//               or compile fail for non-function type argument
+template <typename F> using function_is_const
+      = typename function_traits<F>::is_const;
+
+template <typename F> using function_is_volatile
+      = typename function_traits<F>::is_volatile;
+
+template <typename F> using function_is_cv
+      = typename function_traits<F>::is_cv;
+
+template <typename F> using function_is_reference
+      = typename function_traits<F>::is_reference;
+
+template <typename F> using function_is_lvalue_reference
+      = typename function_traits<F>::is_lvalue_reference;
+
+template <typename F> using function_is_rvalue_reference
+      = typename function_traits<F>::is_rvalue_reference;
+
+template <typename F> using function_is_cvref
+      = typename function_traits<F>::is_cvref;
+
+template <typename F> using function_is_noexcept
+      = typename function_traits<F>::is_noexcept;
+
+template <typename F> using function_is_variadic
+      = typename function_traits<F>::is_variadic;
+
+// function_is_*_v are predicate value traits, equal to true / false
+//               or compile fail for non-function type argument
 template <typename F> inline constexpr bool function_is_const_v =
-                        typename function_traits<F>::is_const();
+                                            function_is_const<F>();
 
-template <typename F> struct function_is_volatile
-                : function_traits<F>::is_volatile {};
 template <typename F> inline constexpr bool function_is_volatile_v =
-                        typename function_traits<F>::is_volatile();
+                                            function_is_volatile<F>();
 
-template <typename F> struct function_is_cv
-                : function_traits<F>::is_cv {};
 template <typename F> inline constexpr bool function_is_cv_v =
-                        typename function_traits<F>::is_cv();
+                                            function_is_cv<F>();
 
-template <typename F> struct function_is_reference
-                : function_traits<F>::is_reference {};
 template <typename F> inline constexpr bool function_is_reference_v =
-                        typename function_traits<F>::is_reference();
+                                            function_is_reference<F>();
 
-template <typename F> struct function_is_lvalue_reference
-                : function_traits<F>::is_lvalue_reference {};
 template <typename F> inline constexpr bool function_is_lvalue_reference_v =
-                        typename function_traits<F>::is_lvalue_reference();
+                                            function_is_lvalue_reference<F>();
 
-template <typename F> struct function_is_rvalue_reference
-                : function_traits<F>::is_rvalue_reference {};
 template <typename F> inline constexpr bool function_is_rvalue_reference_v =
-                        typename function_traits<F>::is_rvalue_reference();
+                                            function_is_rvalue_reference<F>();
 
-template <typename F> struct function_is_cvref
-                : function_traits<F>::is_cvref {};
 template <typename F> inline constexpr bool function_is_cvref_v =
-                        typename function_traits<F>::is_cvref();
+                                            function_is_cvref<F>();
 
-template <typename F> struct function_is_noexcept
-                : function_traits<F>::is_noexcept {};
 template <typename F> inline constexpr bool function_is_noexcept_v =
-                        typename function_traits<F>::is_noexcept();
+                                            function_is_noexcept<F>();
 
-template <typename F> struct function_is_variadic
-                : function_traits<F>::is_variadic {};
 template <typename F> inline constexpr bool function_is_variadic_v =
-                        typename function_traits<F>::is_variadic();
+                                            function_is_variadic<F>();
 
-// ltl::is_function - same as std::is_function
+// is_function_* are 'lazy' predicate type traits, safe to call for any type
+//               inherit from true_type / false_type
+//               or empty base for non-function type argument
+template <typename F> struct is_function_const :
+        impl::predicate_base<function_is_const,F> {};
+
+template <typename F> struct is_function_volatile :
+        impl::predicate_base<function_is_volatile,F> {};
+
+template <typename F> struct is_function_cv :
+        impl::predicate_base<function_is_cv,F> {};
+
+template <typename F> struct is_function_reference :
+        impl::predicate_base<function_is_reference,F> {};
+
+template <typename F> struct is_function_lvalue_reference :
+        impl::predicate_base<function_is_lvalue_reference,F> {};
+
+template <typename F> struct is_function_rvalue_reference :
+        impl::predicate_base<function_is_rvalue_reference,F> {};
+
+template <typename F> struct is_function_cvref :
+        impl::predicate_base<function_is_cvref,F> {};
+
+template <typename F> struct is_function_noexcept :
+        impl::predicate_base<function_is_noexcept,F> {};
+
+template <typename F> struct is_function_variadic :
+        impl::predicate_base<function_is_variadic,F> {};
+
+
+// ltl::is_function - equivalent to std::is_function
 // - using this definition saves redundant instantiation of std::function
 template <typename T> struct is_function
-                           : std::bool_constant<impl::is_function_v<T>> {};
+  : std::bool_constant<impl::is_function_v<T>> {};
 template <typename T>
-inline constexpr bool is_function_v = impl::is_function_v<T>;
+inline constexpr bool is_function_v = is_function<T>();
                                  // = requires {sizeof(function_traits<T>);};
 
 // is_free_function_v<F> : checks if type F is a free function type

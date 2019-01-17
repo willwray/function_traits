@@ -66,17 +66,17 @@
      function_set_signature_t<F,S> // set S as the function signature
                                    // keeping cvref-nx of function F
 
-   Reference qualifiers are represented by an enum type ref_qual_v:
+   Reference qualifiers are represented by an enum type ref_qual:
 
-     - null_ref_v    no reference qualifier, same as ref_qual_v{}
+     - null_ref_v    no reference qualifier, same as ref_qual{}
      - lval_ref_v    lvalue reference qualifier: &
      - rval_ref_v    rvalue reference qualifier: &&
 
-   Addition of ref_qual_v values gives the same reference collapsed
+   Addition of ref_qual values gives the same reference collapsed
    result as compounding references on ordinary object types.
    Template function reference_v<T> returns the reference type of T:
 
-     reference_v<T>() -> ref_qual_v  // defined for all types
+     reference_v<T>() -> ref_qual  // defined for all types
 
    For function types is gives the function type reference qualifier.
    For other types it gives the ordinary reference qualifier.
@@ -137,43 +137,52 @@ template <typename F> class function_traits;
 // A default type-list type for returning function parameter types
 template <typename...> struct function_parameter_types;
 
-// ref_qual_v: a value to represent a reference qualifier
-//   null_ref_v  no reference qualifier
+// ref_qual: a value to represent a reference qualifier
+//   null_ref_v    no reference qualifier
 //   rval_ref_v    rvalue reference qualifier: &&
 //   lval_ref_v    lvalue reference qualifier: &
-enum ref_qual_v { null_ref_v, rval_ref_v, lval_ref_v = 3 };
+enum ref_qual { null_ref_v, rval_ref_v, lval_ref_v = 3 };
 
-// ref_qual_v operator+( ref_qual_v, ref_qual_v)
+// ref_qual operator+( ref_qual, ref_qual)
 // 'adds' reference qualifiers with reference collapse
-constexpr ref_qual_v operator+( ref_qual_v a, ref_qual_v b)
+constexpr ref_qual operator+( ref_qual a, ref_qual b)
 {
-  return static_cast<ref_qual_v>(a|b);
+  return static_cast<ref_qual>(a|b);
 }
 
-// reference_v<T>() returns a ref_qual_v value representing
+// reference_v<T>() returns a ref_qual value representing
 //  the reference qualifier on type T (a general type or function type)
 template <typename T>
-constexpr ref_qual_v reference_v()
+constexpr ref_qual reference_v()
 {
   if constexpr (std::is_function_v<T>) {
     using F = function_traits<T>;
     return typename F::is_lvalue_reference()
               ? lval_ref_v
-              : typename F::is_rvalue_reference() ? rval_ref_v : ref_qual_v{};
+              : typename F::is_rvalue_reference() ? rval_ref_v : null_ref_v;
     } else {
       return std::is_lvalue_reference_v<T>
               ? lval_ref_v
-              : std::is_rvalue_reference_v<T> ? rval_ref_v : ref_qual_v{};
+              : std::is_rvalue_reference_v<T> ? rval_ref_v : null_ref_v;
     }
 }
 
 namespace impl
 {
+// is_function implementation can be removed with C++20 concepts as it can
+// be implemented directly as = requires { sizeof(function_traits<T>); };
+template <typename T, typename = decltype(sizeof(int))>
+inline constexpr bool is_function_v = false;
+
+template <typename T>
+inline constexpr bool is_function_v<T,decltype(sizeof(function_traits<T>))>
+                                    = true;
+
 // function_cvref_nx<setter, c, v, ref, nx>
 // Convenience collection of type aliases for cvref & noexcept properties.
 // Injected setter template set_cvref_nx is used for template set_* aliases.
-template <template <bool, bool, ref_qual_v, bool> typename set_cvref_nx,
-          bool c, bool v, ref_qual_v ref, bool nx>
+template <template <bool, bool, ref_qual, bool> typename set_cvref_nx,
+          bool c, bool v, ref_qual ref, bool nx>
 struct function_cvref_nx
 {
   using is_const = std::bool_constant<c>;
@@ -189,17 +198,17 @@ struct function_cvref_nx
   template <bool C> using set_const_t = set_cvref_nx<C, v, ref, nx>;
   template <bool V> using set_volatile_t = set_cvref_nx<c, V, ref, nx>;
   template <bool C, bool V> using set_cv_t = set_cvref_nx<C, V, ref, nx>;
-  template <ref_qual_v R> using set_reference_t = set_cvref_nx<c, v, R, nx>;
-  template <bool C, bool V, ref_qual_v R = null_ref_v>
+  template <ref_qual R> using set_reference_t = set_cvref_nx<c, v, R, nx>;
+  template <bool C, bool V, ref_qual R = null_ref_v>
   using set_cvref_t = set_cvref_nx<C, V, R, nx>;
   template <bool NX> using set_noexcept_t = set_cvref_nx<c, v, ref, NX>;
 
   template <bool C> using set_const = function_traits<set_const_t<C>>;
   template <bool V> using set_volatile = function_traits<set_volatile_t<V>>;
   template <bool C, bool V> using set_cv = function_traits<set_cv_t<C, V>>;
-  template <ref_qual_v R>
+  template <ref_qual R>
   using set_reference = function_traits<set_reference_t<R>>;
-  template <bool C, bool V, ref_qual_v R = null_ref_v>
+  template <bool C, bool V, ref_qual R = null_ref_v>
   using set_cvref = function_traits<set_cvref_t<C, V, R>>;
   template <bool NX> using set_noexcept = function_traits<set_noexcept_t<NX>>;
 };
@@ -229,7 +238,7 @@ class function_base<R(P...__VA_ARGS__)>                                \
   using args_t = T<P...>; \
  private:\
   template <typename T> struct id { using type = T; };\
-  template <bool c, bool v, ref_qual_v r, bool nx>\
+  template <bool c, bool v, ref_qual r, bool nx>\
   static constexpr auto setcvrnx()\
   {\
     if constexpr (r == null_ref_v) {\
@@ -271,7 +280,7 @@ class function_base<R(P...__VA_ARGS__)>                                \
     }\
   }\
  public:                                                                     \
-  template <bool c, bool v, ref_qual_v r, bool nx>                           \
+  template <bool c, bool v, ref_qual r, bool nx>                             \
   using set_cvref_noexcept_t = typename decltype(setcvrnx<c,v,r,nx>())::type;\
 }
 FUNCTION_BASE(,);
@@ -390,14 +399,22 @@ template <typename F> struct function_is_variadic
 template <typename F> inline constexpr bool function_is_variadic_v =
                         typename function_traits<F>::is_variadic();
 
+// ltl::is_function - same as std::is_function
+// - using this definition saves redundant instantiation of std::function
+template <typename T> struct is_function
+                           : std::bool_constant<impl::is_function_v<T>> {};
+template <typename T>
+inline constexpr bool is_function_v = impl::is_function_v<T>;
+                                 // = requires {sizeof(function_traits<T>);};
+
 // is_free_function_v<F> : checks if type F is a free function type
 //   true if F is a function type without cvref qualifiers
 //   false if F is not a function type or is a cvref qualified function type
 template <typename F>
 inline constexpr bool is_free_function_v = []{
-         if constexpr(std::is_function_v<F>)
-           return !function_is_cvref_v<F>;
-         return false; }();
+             if constexpr (is_function_v<F>)
+               return !function_is_cvref_v<F>;
+             return false; }();
 
 template <typename F> struct is_free_function
         : std::bool_constant<is_free_function_v<F>> {};
@@ -448,10 +465,10 @@ template <typename F>
 using function_remove_cv_t = function_set_cv_t<F, false, false>;
 
 // set_reference, set_reference_lvalue, set_reference_rvalue
-template <typename F, ref_qual_v R>
+template <typename F, ref_qual R>
 using function_set_reference =
     typename function_traits<F>::template set_reference<R>;
-template <typename F, ref_qual_v R>
+template <typename F, ref_qual R>
 using function_set_reference_t =
     typename function_traits<F>::template set_reference_t<R>;
 
@@ -466,9 +483,9 @@ template <typename F>
 using function_set_reference_rvalue_t = function_set_reference_t<F, rval_ref_v>;
 
 // add reference does reference-collapsing
-template <typename F, ref_qual_v R>
+template <typename F, ref_qual R>
 using function_add_reference = function_set_reference<F, reference_v<F>() + R>;
-template <typename F, ref_qual_v R>
+template <typename F, ref_qual R>
 using function_add_reference_t =
     function_set_reference_t<F, reference_v<F>() + R>;
 
@@ -478,10 +495,10 @@ template <typename F>
 using function_remove_reference_t = function_set_reference_t<F, null_ref_v>;
 
 // set_cvref, set_cvref_as, remove_cvref
-template <typename F, bool C, bool V, ref_qual_v R = null_ref_v>
+template <typename F, bool C, bool V, ref_qual R = null_ref_v>
 using function_set_cvref =
     typename function_traits<F>::template set_cvref<V, R>;
-template <typename F, bool C, bool V, ref_qual_v R = null_ref_v>
+template <typename F, bool C, bool V, ref_qual R = null_ref_v>
 using function_set_cvref_t =
     typename function_traits<F>::template set_cvref_t<V, R>;
 

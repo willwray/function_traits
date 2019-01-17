@@ -174,7 +174,7 @@ constexpr ref_qual operator+( ref_qual a, ref_qual b)
 template <typename T>
 constexpr ref_qual reference_v()
 {
-  if constexpr (std::is_function_v<T>) {
+  if constexpr (is_function_v<T>) {
     using F = function_traits<T>;
     return typename F::is_lvalue_reference()
               ? lval_ref_v

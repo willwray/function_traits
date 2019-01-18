@@ -12,7 +12,7 @@
 
 This reference deals with the function traits in groups:
 
-* [Predicate traits](#predicate_traits): `is_function_*<T>` and `function_is_*<F>`
+* [Predicate traits](#predicate-traits): `is_function_*<T>` and `function_is_*<F>`
 * Type traits (property 'getters'): `function_*<F>`
 * Modifying traits, no Args: `function_add_*<F>`, `function_remove_*<F>`
 * Modifying traits with Args (property 'setter's): `function_set_*<F,Args...>`

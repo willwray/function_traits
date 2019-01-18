@@ -18,17 +18,20 @@ static_assert( ltl::rval_ref_v + ltl::lval_ref_v == ltl::lval_ref_v ); // apse
 static_assert( ltl::rval_ref_v + ltl::rval_ref_v == ltl::rval_ref_v );
 
 // Check reference_v<T> function
-static_assert( ltl::reference_v<int>() == ltl::null_ref_v );
-static_assert( ltl::reference_v<void>() == ltl::null_ref_v );
-static_assert( ltl::reference_v<int&>() == ltl::lval_ref_v );
-static_assert( ltl::reference_v<int&&>() == ltl::rval_ref_v );
+static_assert( ltl::reference_v<int> == ltl::null_ref_v );
+static_assert( ltl::reference_v<void> == ltl::null_ref_v );
+static_assert( ltl::reference_v<int&> == ltl::lval_ref_v );
+static_assert( ltl::reference_v<int&&> == ltl::rval_ref_v );
 
-static_assert( ltl::reference_v<int()>() == ltl::null_ref_v );
-static_assert( ltl::reference_v<void()>() == ltl::null_ref_v );
-static_assert( ltl::reference_v<int()&>() == ltl::lval_ref_v );
-static_assert( ltl::reference_v<int()&&>() == ltl::rval_ref_v );
-static_assert( ltl::reference_v<void() volatile& noexcept>()
+static_assert( ltl::reference_v<int()> == ltl::null_ref_v );
+static_assert( ltl::reference_v<void()> == ltl::null_ref_v );
+static_assert( ltl::reference_v<int()&> == ltl::lval_ref_v );
+static_assert( ltl::reference_v<int()&&> == ltl::rval_ref_v );
+static_assert( ltl::reference_v<void() volatile& noexcept>
                                            == ltl::lval_ref_v );
+// Test is_function trait
+static_assert( ltl::is_function_v<int()>);
+static_assert(!ltl::is_function_v<int>);
 
 // Test is_free_function trait
 static_assert( ! ltl::is_free_function_v<void> );
@@ -39,8 +42,18 @@ static_assert( ! ltl::is_free_function_v<int() const> );
 static_assert( ltl::is_free_function_v<int()> );
 static_assert( ltl::is_free_function_v<void() noexcept(true)> );
 
-// Note: a type alias doesn't instantiate, no substitution error here
-using fir = ltl::function_is_reference<int>;
+// Lazy trait gives no error for non-function type
+using fir = ltl::is_function_reference<int>;
+
+// Test that fir has no value member
+template <typename T, typename = void>
+inline constexpr bool has_value = false;
+
+template <typename T>
+inline constexpr bool has_value<T,std::void_t<decltype(T::value)>> = true;
+
+static_assert( !has_value<fir>,
+  "function_trait<non function type> should not have a value member");
 
 namespace auto_void
 {
@@ -80,19 +93,23 @@ SAME( typename F::set_const_t<true>, fc );
 SAME( typename F::set_volatile_t<true>, fv );
 SAME( typename F::set_cv_t<true,true>, fcv );
 SAME( typename F::set_reference_t<ltl::lval_ref_v>, fl );
+SAME( typename F::set_reference_t<ltl::rval_ref_v>, fr );
 SAME( typename F::set_cvref_t<true,false,ltl::lval_ref_v>, fcl );
 SAME( typename F::set_cvref_t<true,false>, fc );
 SAME( typename F::set_noexcept_t<true>, void() noexcept );
 SAME( typename F::set_variadic_t<true>, void(...) );
 SAME( typename F::set_return_type_t<int>, int() );
-SAME( typename F::signature_t, void() );
 
 SAME( typename F::set_const<true>, Fc );
 SAME( typename F::set_volatile<true>, Fv );
 SAME( typename F::set_cv<true,true>, Fcv );
 SAME( typename F::set_reference<ltl::lval_ref_v>, Fl );
+SAME( typename F::set_reference<ltl::rval_ref_v>, Fr );
 SAME( typename F::set_cvref<true,false,ltl::lval_ref_v>, Fcl );
 SAME( typename F::set_cvref<true,false>, Fc );
+SAME( typename F::set_noexcept<true>, ltl::function_traits<void() noexcept> );
+//SAME( typename F::set_variadic<true>, ltl::function_traits<void(...)> );
+
 //SAME( typename F::set_noexcept<true>, void() noexcept );
 //SAME( typename F::set_cvref_noexcept_t<true,true,ltl::rval_ref_v,true>,
 //                                   void() const volatile && noexcept );

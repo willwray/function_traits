@@ -363,8 +363,15 @@ public:                                                                      \
 
 namespace impl
 {
+// is_function_*<T> traits derive from a predicate_base class that is either
+//      bool_constant<P<T>> of function predicate P for function type T
+//   or empty_base for non-function type T
+
 struct empty_base {};
 
+// pred_base<P,F>() : for function predicate P return (default constructed)
+//  empty_base  for non-function type F, or
+//  P<F>        for function type F (P<F> = std::true_type | std::false_type)
 template <template <typename> typename P, typename F>
 constexpr auto pred_base = []
 {
@@ -375,6 +382,7 @@ constexpr auto pred_base = []
 
 template <template <typename> typename P, typename F>
 using predicate_base = decltype(pred_base<P,F>());
+
 } // namespace impl
 
 // Predicate traits for c,v,ref,noexcept,variadic properties

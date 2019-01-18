@@ -1,6 +1,110 @@
-## General form of traits
+# `function_traits` reference
 
-A trait can be a global 'standalone' trait or a member trait of `function<F>` 
+### `namespace ltl`
+`ltl` is the namespace for all traits and utilities in `function_traits`  
+(pronounce it as you like; LTL as in STL or 'litl' as little Italy said fast).
+
+* Traits prefixed with `function_` are only defined for C++ function types.  
+* Traits prefixed with `is_` are (predicates) defined for any C++ type  
+  (returning an empty class type for non-function type argument).
+
+## Introduction
+
+This reference deals with the function traits in groups:
+
+* [Predicate traits](#predicate_traits): `is_function_*<T>` and `function_is_*<F>`
+* Type traits (property 'getters'): `function_*<F>`
+* Modifying traits, no Args: `function_add_*<F>`, `function_remove_*<F>`
+* Modifying traits with Args (property 'setter's): `function_set_*<F,Args...>`
+
+Each group has a documented interface for its set of properties ('wildcard' `*`).  
+Once you understand the properties of C+ function types, the meaning of  
+each trait follows logically from the property `*` and the trait group.  
+See the [Readme](readme.md) here and then the reference [P0172R0](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0172r0.html) for starters.
+
+The property 'setter' traits are an unconventional
+
+## Terminology, conventional and unconventional
+
+Function types are awkward types, even among C++ types.
+
+In particular, all the properties of a C++ function type are on one level;  
+changing the function signature, modifying cvref qualifiers or noexcept -  
+these act to change the type itself, they do not 'nest' or 'compound'  
+(function is a compound type - a compound of its return and argument types)
+
+For conventional `std` traits, `add` and `remove` variants mostly correspond  
+to 'compounding' and 'decompounding' modifiers
+
+Following `std` convention, there are variants 
+
+
+A few words here to 
+
+
+<details><summary>Table of function type terminology</summary>
+
+|name<br>for function subtype| has `cvref` qualifiers<br>[`const`] [`volatile`] [`&`\|`&&`]| is `noexcept`<br>`noexcept(true)`|
+|-| - |-|
+|'**function**': general function| don't care | don't care |
+|'**free**' function<br>'normal', 'ordinary', 'plain' | NO | don't care |
+|function '**signature**'<br>(a free function subtype) | NO | NO ==<br>`noexcept(false)`|
+|'**abominable**' function | YES | don't care |
+
+</details>
+
+
+
+## Predicate traits
+
+### Predicates for checking properties of general type
+
+These predicate traits can be evaluated for any type.
+
+<details><summary><code>is_function</code></summary>
+
+`ltl::is_function` is equivalent to [`std::is_function`](https://en.cppreference.com/w/cpp/types/is_function)
+
+Saves redundant instantiation of `std::is_function`  
+(for instance, to 'guard' uses of function traits for non-function types)
+
+</details>
+
+<details><summary><code>is_free_function</code></summary>
+
+`is_free_function_v<F>` checks if type `F` is a free function type  
+>`true` if `F` is a function type without cvref qualifiers  
+`false` if `F` is not a function type or is a cvref qualified function type 
+</details>
+
+
+
+### Predicates for function type classification
+
+Simple predicate aliases to `std` `true_type` / `false_type`
+
+* `function_is_const`
+* `function_is_volatile`
+* `function_is_cv`
+* `function_is_reference`
+* `function_is_lvalue_reference`
+* `function_is_rvalue_reference`
+* `function_is_cvref`
+* `function_is_noexcept`
+* `function_is_variadic`
+
+'Lazy' predicates
+
+* `is_function_const`
+* `is_function_volatile`
+* `is_function_cv`
+* `is_function_reference`
+* `is_function_lvalue_reference`
+* `is_function_rvalue_reference`
+* `is_function_cvref`
+* `is_function_noexcept`
+* `is_function_variadic`
+
 
 The predicate member traits are aliases of `bool_constant<?>`
 <br>(so they are equal to `true_type` or `false_type` depending on `?`).

@@ -150,6 +150,23 @@ constexpr ref_qual operator+( ref_qual a, ref_qual b)
   return static_cast<ref_qual>(a|b);
 }
 
+template <typename T>
+inline constexpr ref_qual object_reference_v = []
+{
+  return std::is_lvalue_reference_v<T>
+               ? lval_ref_v
+               : std::is_rvalue_reference_v<T> ? rval_ref_v : null_ref_v;
+}();
+
+template <typename T>
+inline constexpr ref_qual function_reference_v = []
+{
+  using F = function_traits<T>;
+  return typename F::is_lvalue_reference()
+            ? lval_ref_v
+            : typename F::is_rvalue_reference() ? rval_ref_v : null_ref_v;
+}();
+
 namespace impl
 {
 template <typename T, typename = decltype(sizeof(int))>
@@ -165,16 +182,12 @@ template <typename T>
 constexpr ref_qual reference_v()
 {
   if constexpr (is_function_v<T>) {
-    using F = function_traits<T>;
-    return typename F::is_lvalue_reference()
-              ? lval_ref_v
-              : typename F::is_rvalue_reference() ? rval_ref_v : null_ref_v;
-    } else {
-      return std::is_lvalue_reference_v<T>
-              ? lval_ref_v
-              : std::is_rvalue_reference_v<T> ? rval_ref_v : null_ref_v;
-    }
+    return function_reference_v<T>;
+  } else {
+    return object_reference_v<T>;
+  }
 }
+
 } // namespace impl
 
 template <typename T>

@@ -29,9 +29,19 @@
         - noexcept(bool): true|false    2 combinations
 
    Function 'signature' here refers to return type R and parameters P...
-   (with optional C-style varargs but without qualifiers and noexcept):
+   (with optional C-style varargs but without qualifiers and noexcept).
+   A function trait is provided to extract just the function signature:
 
-     function_signature_t<F> // removes cvref qualifiers and noexcept
+     function_signature_t<F> // type alias yielding a function type =
+                       // F with cvref qualifiers and noexcept removed
+     function_signature<F>   // class with public type alias member
+                             //   type = function_signature_t<F>
+
+   Traits prefixed with 'function_' like this are only well defined for
+   function types - evaluating with non-function type Arg is an error.
+
+     function_signature<F> // removes cvref qualifiers and noexcept
+
 
    This library follows std trait conventions:
 
@@ -40,10 +50,18 @@
       no suffix for a result class (the trait is a class template
                                     with 'type' or 'value' member)
 
+   'Free' function types are function types without cvref qualifiers
+   (they are valid types for free functions
+   A 'top level' predicate trait is provided to test this:
+
+     is_free_function<T>  // class inherited from std::bool_constant<?>
+     is_free_function_v<T>  // class inherited from std::bool_constant<?>
+
    Function types with cvref qualifiers are 'abominable' (see doc refs).
    To test if function type F is cvref qualified use predicate trait:
 
-     function_is_cvref<F> // class inherited from std::bool_constant<?>
+     is_function_cvref<F> // class inherited from std::bool_constant<?>
+     function_is_cvref<F>   // std::bool_constant<Q> where Q is...
      function_is_cvref_v<F> // true if any c,v or ref qualifier present
 
    To test if a type T is a function type that is not cvref qualified:
@@ -82,7 +100,8 @@
    For other types it gives the ordinary reference qualifier.
    The 'set_reference' traits then allow to copy between function types:
 
-     function_set_reference<F, reference_v<G>> // copy G ref qual to F
+     // copy the reference qualifiers from G to F (with no collapse)
+     function_set_reference<F, function_reference_v<G>>
 
      function_set_reference<F, lval_ref_v>   // set ref qual to &
      function_set_reference_lvalue<F>        // set ref qual to &
@@ -150,13 +169,13 @@ constexpr ref_qual operator+( ref_qual a, ref_qual b)
   return static_cast<ref_qual>(a|b);
 }
 
-// object_reference_v<T> is a ref_qual value inidicating whether type T is an
+// reference_v<T> is a ref_qual value inidicating whether type T is
 // lvalue-reference, rvalue-reference or not a reference.
 template <typename T>
 inline constexpr
 ref_qual
-object_reference_v = std::is_lvalue_reference_v<T> ? lval_ref_v
-                   : std::is_rvalue_reference_v<T> ? rval_ref_v : null_ref_v;
+reference_v = std::is_lvalue_reference_v<T> ? lval_ref_v
+            : std::is_rvalue_reference_v<T> ? rval_ref_v : null_ref_v;
 
 // function_reference_v<F> is a ref_qual value of the reference qualifier on a
 // function type - it is well defined only for function type arguments.
@@ -227,7 +246,7 @@ class function_base<R(P...__VA_ARGS__)>                                \
   using signature_t = R(P...__VA_ARGS__);                              \
   using is_variadic = std::bool_constant<bool(#__VA_ARGS__[0])>;       \
   template <template <typename...> typename T=function_parameter_types>\
-  using args_t = T<P...>; \
+  using arg_types = T<P...>;\
  private:\
   template <typename T> struct id { using type = T; };\
   template <bool c, bool v, ref_qual r, bool nx>\
@@ -291,7 +310,7 @@ class function_traits<R(P...__VA_ARGS__) CV REF noexcept(NOEXCEPT_ND(NX,X))> \
           impl::function_base<R(P...__VA_ARGS__)>::                          \
           template set_cvref_noexcept_t,                                     \
           std::is_const_v<int CV>, std::is_volatile_v<int CV>,               \
-          object_reference_v<int REF>, NOEXCEPT_ND(NX,X)>                    \
+          reference_v<int REF>, NOEXCEPT_ND(NX,X)>                           \
 {                                                                            \
   enum : bool { nx = NOEXCEPT_ND(NX,X) };                                    \
   template <typename> struct set_signature;                                  \
@@ -365,18 +384,6 @@ inline constexpr bool is_function_v = impl::is_function_v<T>;
                                  // = requires {sizeof(function_traits<T>);};
 // Note: SFINAE impl can be removed with C++20 concepts as above ^^^
 
-// reference_v<T> is a ref_qual value representing
-//  the reference qualifier on type T (a general type or function type)
-template <typename T>
-inline constexpr ref_qual reference_v = []
-{
-  if constexpr (is_function_v<T>) {
-    return function_reference_v<T>;
-  } else {
-    return object_reference_v<T>;
-  }
-}();
-
 namespace impl
 {
 // is_function_*<T> traits derive from a predicate_base class that is either
@@ -393,7 +400,8 @@ constexpr auto pred_base = []
 {
   if constexpr (is_function_v<F>)
     return (P<F>){};
-  return empty_base{};
+  else
+    return empty_base{};
 };
 
 template <template <typename> typename P, typename F>
@@ -568,10 +576,11 @@ using function_set_reference_rvalue_t = function_set_reference_t<F, rval_ref_v>;
 
 // add reference does reference-collapsing
 template <typename F, ref_qual R>
-using function_add_reference = function_set_reference<F, reference_v<F> + R>;
+using function_add_reference = function_set_reference<F,
+                                   function_reference_v<F> + R>;
 template <typename F, ref_qual R>
 using function_add_reference_t =
-    function_set_reference_t<F, reference_v<F> + R>;
+      function_set_reference_t<F, function_reference_v<F> + R>;
 
 template <typename F>
 using function_remove_reference = function_set_reference<F, null_ref_v>;
@@ -589,11 +598,11 @@ using function_set_cvref_t =
 template <typename F, typename S>
 using function_set_cvref_as =
     function_set_cvref<F, function_is_const_v<S>, function_is_volatile_v<S>,
-                       reference_v<S>>;
+                       function_reference_v<S>>;
 template <typename F, typename S>
 using function_set_cvref_as_t =
     function_set_cvref_t<F, function_is_const_v<S>, function_is_volatile_v<S>,
-                         reference_v<S>>;
+                         function_reference_v<S>>;
 
 template <typename F>
 using function_remove_cvref_t = typename function_traits<F>::remove_cvref_t;
@@ -660,13 +669,12 @@ using function_signature = function_traits<function_signature_t<F>>;
 template <typename F, typename S>
 using function_set_signature_t =
     typename function_traits<F>::template set_signature_t<S>;
-template <typename F, typename S> struct function_set_signature {
-  using type = function_set_signature_t<F, S>;
-};
+template <typename F, typename S> using function_set_signature =
+  function_traits<function_set_signature_t<F, S>>;
 
-// args_t
+// arg_types
 template <typename F,
           template <typename...> typename T = function_parameter_types>
-using function_args_t = typename function_traits<F>::template args_t<T>;
+using function_arg_types = typename function_traits<F>::template arg_types<T>;
 
 } // namespace ltl

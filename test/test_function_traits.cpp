@@ -2,6 +2,13 @@
 
 #define SAME(...) static_assert(std::is_same_v<__VA_ARGS__> );
 
+// Test if type T has a member called 'value'
+template <typename T, typename = void>
+inline constexpr bool has_value = false;
+
+template <typename T>
+inline constexpr bool has_value<T,std::void_t<decltype(T::value)>> = true;
+
 template <typename> struct wotype;
 
 // Check that ref_qual_v addition does reference collapse correctly
@@ -23,12 +30,24 @@ static_assert( ltl::reference_v<void> == ltl::null_ref_v );
 static_assert( ltl::reference_v<int&> == ltl::lval_ref_v );
 static_assert( ltl::reference_v<int&&> == ltl::rval_ref_v );
 
+static_assert( ltl::reference_v<int(&)()noexcept> == ltl::lval_ref_v );
+static_assert( ltl::reference_v<void(&&)()> == ltl::rval_ref_v );
+
 static_assert( ltl::reference_v<int()> == ltl::null_ref_v );
 static_assert( ltl::reference_v<void()> == ltl::null_ref_v );
-static_assert( ltl::reference_v<int()&> == ltl::lval_ref_v );
-static_assert( ltl::reference_v<int()&&> == ltl::rval_ref_v );
+static_assert( ltl::reference_v<int()&> == ltl::null_ref_v );
+static_assert( ltl::reference_v<int()&&> ==ltl::null_ref_v );
 static_assert( ltl::reference_v<void() volatile& noexcept>
+                                         == ltl::null_ref_v );
+
+// Check function_reference_v<T> function
+static_assert( ltl::function_reference_v<int()> == ltl::null_ref_v );
+static_assert( ltl::function_reference_v<void()> == ltl::null_ref_v );
+static_assert( ltl::function_reference_v<int()&> == ltl::lval_ref_v );
+static_assert( ltl::function_reference_v<int()&&> == ltl::rval_ref_v );
+static_assert( ltl::function_reference_v<void() volatile& noexcept>
                                            == ltl::lval_ref_v );
+
 // Test is_function trait
 static_assert( ltl::is_function_v<int()>);
 static_assert(!ltl::is_function_v<int>);
@@ -42,18 +61,20 @@ static_assert( ! ltl::is_free_function_v<int() const> );
 static_assert( ltl::is_free_function_v<int()> );
 static_assert( ltl::is_free_function_v<void() noexcept(true)> );
 
-// Lazy trait gives no error for non-function type
-using fir = ltl::is_function_reference<int>;
+// The 'is_function_*' predicate traits are defined for all types so
+// these 'lazy' traits gives no error for non-function type
+using ifr = ltl::is_function_reference<int>;
+// note -   ltl::function_is_reference<int> causes a compile error
+static_assert( !has_value<ifr>,
+  "is_function_trait<non function type> should not have a value member");
 
-// Test that fir has no value member
-template <typename T, typename = void>
-inline constexpr bool has_value = false;
+using ifrf = ltl::is_function_reference<int()&>;
+static_assert( has_value<ifrf>,
+  "is_function_trait<function type> should have a value member");
 
-template <typename T>
-inline constexpr bool has_value<T,std::void_t<decltype(T::value)>> = true;
-
-static_assert( !has_value<fir>,
-  "function_trait<non function type> should not have a value member");
+using firf = ltl::function_is_reference<int()&>;
+static_assert( has_value<firf>,
+  "function_is_trait<function type> should have a value member");
 
 namespace auto_void
 {
@@ -87,7 +108,7 @@ SAME( typename F::type, void() );
 SAME( typename F::return_type_t, void );
 SAME( typename F::signature_t, void() );
 SAME( typename F::remove_cvref_t, void() );
-SAME( typename F::args_t<>, ltl::function_parameter_types<> );
+SAME( typename F::arg_types<>, ltl::function_parameter_types<> );
 
 SAME( typename F::set_const_t<true>, fc );
 SAME( typename F::set_volatile_t<true>, fv );
@@ -138,7 +159,7 @@ SAME( typename Fnx::type, fnx );
 SAME( typename Fnx::return_type_t, std::is_const<void const> );
 SAME( typename Fnx::signature_t, f );
 SAME( typename Fnx::remove_cvref_t, fnx);
-SAME( typename Fnx::args_t<>, ltl::function_parameter_types<void const*> );
+SAME( typename Fnx::arg_types<>, ltl::function_parameter_types<void const*> );
 }
 
 
@@ -165,7 +186,7 @@ using FVFB = void(char,bool());
 
 static_assert(
    std::is_void_v< ltl::function_return_type_t< FVFB > >
-&& std::is_same_v< ltl::function_args_t< FVFB >,
+&& std::is_same_v< ltl::function_arg_types< FVFB >,
                    ltl::function_parameter_types<char,bool(*)()> >
 );
 

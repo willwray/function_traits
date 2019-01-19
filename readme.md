@@ -2,15 +2,16 @@
 
 ## Type traits for properties of C++ function types
 
+### The anatomy of a general C++17 function type:
+
 * **`R(P...`[`,...`]`)` [`const`] [`volatile`] [`&`|`&&`] `noexcept(X)`**
 
-This is the anatomy of a general C++17 function type  
-templated with **`<typename R, typename... P, bool X>`**:
+templated on `<typename R, typename... P, bool X>`;  
 
-* **`R(P...)`** : Function '**signature**'; **return** type **`R`**, **parameter** types **`P...`**, and
+* **`R(P...)`** : Function '**signature**'; its **return** type **`R`**, **parameter** types **`P...`** and
 * `R(P...,`**`...`**`)` : existence of C-style **varargs** (denoted by trailing ellipsis **`...`**)
-* `R(P...)` **`noexcept(bool)`** : Function **exception** specification; true | false
-* `R(P...)` [**`const`**] [**`volatile`**] [**`&`**|**`&&`**] : Function **cvref** qualifiers
+* `R(P...)` **`noexcept(X)`** : Function **exception** specification; X = true | false
+* `R(P...)` [**`const`**] [**`volatile`**] [**`&`**|**`&&`**] : Function **cvref** qualifiers; 12 combos
 
 `function_traits` are useful in library code that must handle all function types  
 including possibly cvref-qualified function types - the 'abominable'  function types.
@@ -40,9 +41,9 @@ forbidden to form a pointer or a reference to a cvref-qualified function type.
 >
 >The standard type trait `std::is_function_v<F>` is true for all function types.  
 >  
->The standard library does not (yet) provide other traits for C++ function types,  
-mainly due to the complications caused by the possible cvref qualifers -  
-this library fills in for the lack of function traits in the standard library.
+>The C++17 standard library doesn't provide other traits for C++ function types  
+(mainly due to the complications caused by the possible cvref qualifers).  
+This library fills in for the lack of function traits in the standard library.
 </details>
 
 ----
@@ -87,16 +88,17 @@ DEALINGS IN THE SOFTWARE.
 
 **Type trait**: a template-based interface to query or modify the properties of types.
 
->**`function_traits`** is a single-header library of traits for C++ function types.  
-No more, no less; it does not provide traits for general [Callable](https://en.cppreference.com/w/cpp/named_req/Callable) types -  
+>**`function_traits`** is a library of traits for C++17 function types -  
+no more, no less; it does not provide traits for general [Callable](https://en.cppreference.com/w/cpp/named_req/Callable) types  
 (function traits can ease implementation of facilities like callable traits).
 >
 >It depends on std `<type_traits>` which it complements with function traits.  
 The library uses `namespace ltl` for its traits, types and functions.
 >
->It is an 'alpha' design with an experimental interface, subject to change.  
-It targets C++17 on recent gcc / clang / msvc compilers.  
-Backwards compatibility, for older compilers or for pre-17, is not a priority.
+>It targets C++17 on recent gcc / clang / msvc compilers.  
+Backwards compatibility, for older compilers or for pre-17, is not a priority.  
+It is an 'alpha' design with an experimental interface, subject to change.  
+Once C++20 is available, constraints will be added to improve error reporting. 
 
 </details>
 
@@ -157,7 +159,7 @@ Since all 24/48 specializations are needed to implement *any* function trait
 with full generality, one might as well write a full collection of traits.
 >
 >[1] C++ standard library `copy_*` traits are proposed in [P1016](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1016r0.pdf)  
-'A few additional type manipulation utilities' (unlikely to be voted in).  
+"A few additional type manipulation utilities" (unlikely to be in C++20).  
 Copy traits like this are not implemented yet in Boost.CallableTraits  
 though there's an open [issue](https://github.com/boostorg/callable_traits/issues/139) to add a `copy_member_cvref` trait.
 >
@@ -292,7 +294,7 @@ These 48 specializations are also listed in [Boost.CallableTraits](https://www.b
     Because each trait has to pull in the full 24 (or 48) specializations,  
     even if a user may only want one of the many traits,  
     it seems not worth the complexity of providing individual headers  
-    (unlikely to improve compile time, code organisation or modularity).
+    (if you can show benefits worth the complexity then open an issue).
     </details>
 
 * <details><summary><b>Forward looking</b>: to concepts - down with SFINAE!</summary>
@@ -309,33 +311,46 @@ These 48 specializations are also listed in [Boost.CallableTraits](https://www.b
 
 ## **Examples**
 
-<details><summary>Predicate traits and type property traits</summary>
+<details><summary>Getting started</summary>
 
->Put the header file where you want it; here, the `ltl` include directory  
-reflects `function_traits` namespace, `ltl`:
+>First, put the header file where you want it and configure your include path.  
+Here, the `ltl` include directory reflects `function_traits` namespace, `ltl`:
 
 ```c++
 #include <ltl/function_traits.hpp>
 ```
 
->A standalone predicate trait is provided to check that a function type  
-is a valid free function type, i.e. it has no 'abominable' cvref qualifiers:  
+Or, just cut and paste the header 
+
+All `function_traits` are defined only for function types; it is an error to  
+instantiate a function trait with a non-function type template parameter.  
+This is reflected in the naming, with 'function' always first; `function_*`.
 
 ```c++
-  void f() noexcept;
-
-  static_assert( ltl::is_free_function_v<decltype(f)> );
+  ltl::function_is_noexcept_v< int > // compile error
 ```
 
-`is_free_function` is defined for all types (it is `false` for non-function types).
+To use function traits with non-function types, guard the trait instantiation  
+with an `if constexpr` `std::is_function_v` block (or overload with constraints). 
 
-All other `function_traits` are defined only for function types.  
+>(Using a function trait with a non function type gives a hard, non-SFINAE, error  
+with a nasty error message from the compiler.)
+
+</details>
+
+<details><summary>Predicate traits and type property traits</summary>
+
+>First, put the header file where you want it and configure your include path.  
+Here, the `ltl` include directory reflects `function_traits` namespace, `ltl`:
+
+```c++
+#include <ltl/function_traits.hpp>
+```
+
+All `function_traits` are defined only for function types; it is an error to  
+instantiate a function trait with a non-function type template parameter.  
 This is reflected in the naming, with 'function' always first; `function_is_*`.  
-To use function traits with non-function types you must guard with `is_function`:
-
-```c++
- std::is_function_v<T> && ltl::function_is_*_v<T>
-```
+To use function traits with non-function types you must guard with `is_function`. 
 
 >(Using a function trait with a non function type gives a hard, non-SFINAE, error  
 with a nasty error message from the compiler.)
@@ -362,10 +377,31 @@ with a nasty error message from the compiler.)
 
   static_assert(
      std::is_void_v< ltl::function_return_type_t< Fcb > >
-  && std::is_same_v< ltl::function_args_t< Fcb, std::tuple >
+  && std::is_same_v< ltl::function_arg_types< Fcb, std::tuple >
                    , std::tuple< char, bool(*)() >
      >
   );
+```
+
+>A standalone predicate trait is provided to check that a function type  
+is a valid free function type, i.e. it has no 'abominable' cvref qualifiers:  
+
+```c++
+  void f() noexcept;
+
+  static_assert( ltl::is_free_function_v<decltype(f)> );
+```
+
+`is_free_function` is defined for all types (it is `false` for non-function types):
+
+For example, `is_free_function_v` is :
+
+```c++
+template <typename F>
+inline constexpr bool is_free_function_v = []{
+         if constexpr(std::is_function_v<F>)
+           return !function_is_cvref_v<F>;
+         return false; }();
 ```
 
 </details>
@@ -466,7 +502,7 @@ int logger(F C::* log_mf, Vargs... vargs) noexcept
                   == bool{sizeof...(vargs)} );
 
     using R = ltl::function_return_type_t<F>;
-    using Ps = ltl::function_args_t<F,std::tuple>;
+    using Ps = ltl::function_arg_types<F,std::tuple>;
     using P0 = std::tuple_element_t<0,Ps>;
 
     static_assert( std::is_same_v< R, int> );

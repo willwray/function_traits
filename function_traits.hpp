@@ -150,57 +150,22 @@ constexpr ref_qual operator+( ref_qual a, ref_qual b)
   return static_cast<ref_qual>(a|b);
 }
 
+// object_reference_v<T> is a ref_qual value inidicating whether type T is an
+// lvalue-reference, rvalue-reference or not a reference.
 template <typename T>
-inline constexpr ref_qual object_reference_v = []
-{
-  return std::is_lvalue_reference_v<T>
-               ? lval_ref_v
-               : std::is_rvalue_reference_v<T> ? rval_ref_v : null_ref_v;
-}();
+inline constexpr
+ref_qual
+object_reference_v = std::is_lvalue_reference_v<T> ? lval_ref_v
+                   : std::is_rvalue_reference_v<T> ? rval_ref_v : null_ref_v;
 
-template <typename T>
-inline constexpr ref_qual function_reference_v = []
-{
-  using F = function_traits<T>;
-  return typename F::is_lvalue_reference()
-            ? lval_ref_v
-            : typename F::is_rvalue_reference() ? rval_ref_v : null_ref_v;
-}();
-
-namespace impl
-{
-template <typename T, typename = decltype(sizeof(int))>
-inline constexpr bool is_function_v = false;
-
-template <typename T>
-inline constexpr bool is_function_v<T,decltype(sizeof(function_traits<T>))>
-                                    = true;
-
-// impl::reference_v<T>() returns a ref_qual value representing
-//  the reference qualifier on type T (a general type or function type)
-template <typename T>
-constexpr ref_qual reference_v()
-{
-  if constexpr (is_function_v<T>) {
-    return function_reference_v<T>;
-  } else {
-    return object_reference_v<T>;
-  }
-}
-
-} // namespace impl
-
-template <typename T>
-inline constexpr ref_qual reference_v = impl::reference_v<T>();
-
-// ltl::is_function - same as std::is_function
-// Using this definition saves redundant instantiation of std::is_function
-template <typename T> struct is_function
-  : std::bool_constant<impl::is_function_v<T>> {};
-template <typename T>
-inline constexpr bool is_function_v = impl::is_function_v<T>;
-                                 // = requires {sizeof(function_traits<T>);};
-// Note: SFINAE impl can be removed with C++20 concepts as above ^^^
+// function_reference_v<F> is a ref_qual value of the reference qualifier on a
+// function type - it is well defined only for function type arguments.
+template <typename F>
+inline constexpr
+ref_qual
+function_reference_v = 
+  typename function_traits<F>::is_lvalue_reference() ? lval_ref_v
+: typename function_traits<F>::is_rvalue_reference() ? rval_ref_v : null_ref_v;
 
 
 namespace impl
@@ -326,7 +291,7 @@ class function_traits<R(P...__VA_ARGS__) CV REF noexcept(NOEXCEPT_ND(NX,X))> \
           impl::function_base<R(P...__VA_ARGS__)>::                          \
           template set_cvref_noexcept_t,                                     \
           std::is_const_v<int CV>, std::is_volatile_v<int CV>,               \
-          reference_v<int REF>, NOEXCEPT_ND(NX,X)>                           \
+          object_reference_v<int REF>, NOEXCEPT_ND(NX,X)>                    \
 {                                                                            \
   enum : bool { nx = NOEXCEPT_ND(NX,X) };                                    \
   template <typename> struct set_signature;                                  \
@@ -377,6 +342,40 @@ public:                                                                      \
 #undef CV_REF_QUALIFIERS
 #undef NOEXCEPT_DEDUCED
 #undef NOEXCEPT_ND
+
+
+// Implementation detail for is_function
+// (this SFINAE impl can be removed in C++20 - see comment below).
+namespace impl
+{
+template <typename T, typename = decltype(sizeof(int))>
+inline constexpr bool is_function_v = false;
+
+template <typename T>
+inline constexpr bool is_function_v<T,decltype(sizeof(function_traits<T>))>
+                                    = true;
+} // namespace impl
+
+// ltl::is_function : equivalent to std::is_function
+// Using this definition saves redundant instantiation of std::is_function
+template <typename T> struct is_function
+  : std::bool_constant<impl::is_function_v<T>> {};
+template <typename T>
+inline constexpr bool is_function_v = impl::is_function_v<T>;
+                                 // = requires {sizeof(function_traits<T>);};
+// Note: SFINAE impl can be removed with C++20 concepts as above ^^^
+
+// reference_v<T> is a ref_qual value representing
+//  the reference qualifier on type T (a general type or function type)
+template <typename T>
+inline constexpr ref_qual reference_v = []
+{
+  if constexpr (is_function_v<T>) {
+    return function_reference_v<T>;
+  } else {
+    return object_reference_v<T>;
+  }
+}();
 
 namespace impl
 {

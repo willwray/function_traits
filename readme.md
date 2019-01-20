@@ -4,17 +4,18 @@
 
 ### The anatomy of a general C++17 function type:
 
-* **`R(P...`[`,...`]`)` [`const`] [`volatile`] [`&`|`&&`] `noexcept(X)`**
+* **`R(P...`**[**`,...`**]**`)`** [**`const`**] [**`volatile`**] [**`&`**|**`&&`**] **`noexcept(X)`**
 
-templated on `<typename R, typename... P, bool X>`;  
+templated on **`<typename R, typename... P, bool X>`**  
 
 * **`R(P...)`** : Function '**signature**'; its **return** type **`R`**, **parameter** types **`P...`** and
 * `R(P...,`**`...`**`)` : existence of C-style **varargs** (denoted by trailing ellipsis **`...`**)
 * `R(P...)` **`noexcept(X)`** : Function **exception** specification; X = true | false
-* `R(P...)` [**`const`**] [**`volatile`**] [**`&`**|**`&&`**] : Function **cvref** qualifiers; 12 combos
+* `R(P...)` [**`const`**] [**`volatile`**] [**`&`**|**`&&`**] : Function **cvref** qualifiers; **12** combos
 
-`function_traits` are useful in library code that must handle all function types  
-including possibly cvref-qualified function types - the 'abominable'  function types.
+**`function_traits`** provide complete reflection / modification of function types.  
+They are useful in generic code that must handle all function types including  
+possibly cvref-qualified function types - the 'abominable'  function types.
 
 <details><summary>More on C++ function types</summary>
 

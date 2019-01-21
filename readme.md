@@ -7,12 +7,11 @@
 **Anatomy** of a general C++17 function type:
 
 **`template <typename R, typename... P, bool X>`**  
-
-* **`R(P...`**[**`,...`**]**`)`** [**`const`**] [**`volatile`**] [**`&`**|**`&&`**] **`noexcept(X)`**
+**`using function = R(P...`**[**`,...`**]**`)`** [**`const`**] [**`volatile`**] [**`&`**|**`&&`**] **`noexcept(X)`**
 
 <details><summary><b>Dissected</b>: a breakdown of the general type, with library API terminology</summary>
 
-API terms in **bold** with '`A`|`B`' for `A` or `B` alternatives, '[`C`]' for optional `C` term.
+>API terms in **bold** with '`A`|`B`' for `A` or `B` alternatives, '[`C`]' for optional `C` term.
 
 Function **signature**:
 
@@ -352,30 +351,28 @@ These 48 specializations are also listed in [Boost.CallableTraits](https://www.b
 <details><summary>Getting started</summary>
 
 >First, put the header file where you want it and configure your include path.  
-Here, the `ltl` include directory reflects `function_traits` namespace, `ltl`:
+Here, the `ltl` include directory reflects `function_traits` namespace, `ltl`  
+(or, just cut and paste the header):
 
 ```c++
 #include <ltl/function_traits.hpp>
 ```
 
-Or, just cut and paste the header.
-
-All `function_*` traits are defined only for function types;
-
->Calling a `function_*` trait with a non function type gives a hard,  
+>All `function_*` traits are defined only for function types.  
+Calling a `function_*` trait with a non function type gives a hard,  
 non-SFINAE, error (with a nasty error message from the compiler).
 
 ```c++
   ltl::function_is_cvref< int > // compile error
 ```
 
-The `function_is_*` predicate traits have SFINAE-friendly siblings:
+>The `function_is_*` predicate traits have SFINAE-friendly siblings:
 
 ```c++
   ltl::is_function_cvref< int > // empty class
 ```
 
-Other `function_*` traits have no safe / SFINAE-friendly variants.  
+>Other `function_*` traits have no safe / SFINAE-friendly variants.  
 To use these function traits with non-function types, you can guard the trait  
 instantiation with `if constexpr (is_function_v<T>)`:
 
@@ -387,7 +384,7 @@ inline constexpr bool is_free_function_v = []{
              return false; }();
 ```
 
-(`conditional_t` doesn't work here as both branches instantiate.)
+>(`conditional_t` doesn't work here as both branches instantiate.)
 
 </details>
 

@@ -4,26 +4,49 @@
 `ltl` is the namespace for all traits and utilities in `function_traits`  
 (pronounce it as you like; LTL as in STL or 'litl' as 'little Italy' said fast).
 
-* Traits prefixed with `is_` are (predicates) defined for any C++ type  
-* Traits prefixed with `function_` are only defined for C++ function types  
+* Traits prefixed with `function_` are defined for C++ function types only  
+* Traits prefixed with `is_` are defined for any C++ type ('safe' predicates)  
 
 A pair of 'top level' predicate traits classify C++ function types among all C++ types:
 
 * `ltl::is_function<T>` equivalent to `std::is_function<T>`
 * `ltl::is_free_function<T>` true for `T` a non-cvref-qualified function type
 
-These top level predicates evaluate as `std::true_type` or `std::false_type`  
-unlike the function predicate traits which treat non-function types differently:
+These two top level predicates evaluate as `std::true_type` or `std::false_type`.  
+The remaining function predicate traits treat non-function types differently:
 
-* `is_function_*<T>` return an empty type for non-function type `T`
 * `function_is_*<T>` cause a compile error on non-function type `T`
+* `is_function_*<T>` return an empty type for non-function type `T`
 
-This is indicated by a `Function` concept - `template <Function F>`  
-though the library targets C++17 so does not yet support C++20 concepts.
+(`is_function_*` is the 'safe' or 'SFINAE-friendly' version of `function_is_*`).  
+
 
 ## Synopsis
 
-<details><summary>List of traits (82 and counting, including _t | _v variants)</summary>
+<details><summary>List of traits (50, or 90 including _t or _v variants)</summary>
+
+```c++
+// Key
+// ===
+  template <typename T> // Indicates trait is defined for all C++ types T
+  template <Function F> // Indicates trait is defined for function types F
+// One day, Function will be a concept or constraint = is_function_v<F>
+
+  P            // For a predicate trait, P is the predicate; type -> bool
+  P<T>, P<F>   // The predicate P evaluated on type T or function type F
+
+  predicate_base<P,T> // An empty struct for non-function type T, or
+  predicate_base<P,F> // bool_constant<P<F>> for function type F
+
+  FuncTr       // For a function trait, FuncTr modifies the function type
+  FuncTr<F>    // The modified function type result of the function trait
+
+  RefQual<T>     // 3-valued ref_qual; is T lval-ref, rval-ref or not a ref
+  FuncRefQual<F> // 3-valued ref_qual; has func F lval, rval or no ref qual
+
+  function_traits<F> // A class containing public member 'type' alias for F
+                     // using type = F;
+```
 
 ```c++
 // 'Top level' predicate traits is_*<T>, is_*_v<T>
@@ -39,8 +62,7 @@ template <typename T> bool is_*_v = bool{P<T>>};
 // Function predicate traits is_function_*<T>
 // =========================
 template <typename T> struct is_function_* : predicate_base<P,T> {};
-// predicate_base<P,T> is an empty struct for non-function type T
-//                  or is bool_constant<P<T>> for function type T
+
   is_function_const
   is_function_volatile
   is_function_cv
@@ -72,10 +94,11 @@ template <Function F> bool function_is_*_v = bool{<P<F>>};
 ```c++
 // Reference qualifier value traits *reference_v<T>
 // ================================
-template <typename T> ref_qual *reference_v = RefQual<T>;
+template <typename T> ref_qual reference_v = RefQual<T>;
+template <function F> ref_qual function_reference_v = FuncRefQual<F>;
 
-  reference_v<T>          (ordinary top level reference qual)
-  function_reference_v<F> (defined only on function types F)
+  reference_v<T>          // Ordinary top level reference qual value
+  function_reference_v<F> // Function reference qual value
 ```
 
 ```c++
@@ -90,23 +113,27 @@ template <typename T> ref_qual *reference_v = RefQual<T>;
 ```c++
 // Function modifying traits taking no arguments
 // =========================
-template <Function F> using function_*_*_t = F_; // modified type;
-template <Function F> using function_*_* = function_traits<F_>;
+template <Function F> using function_*_*_t = FuncTr<F>;
+template <Function F> using function_*_* = function_traits<FuncTr<F>>;
 
   function_add_const             function_remove_const
   function_add_volatile          function_remove_volatile
-  function_add_noexcept          function_remove_noexcept
-  function_add_variadic          function_remove_variadic
+                                 function_remove_cv
+// ^^^^ no add_cv ^^^^
+// vvvv no add_reference vvvv
                                  function_remove_reference
   function_set_reference_lvalue
   function_set_reference_rvalue
+
+  function_add_noexcept          function_remove_noexcept
+  function_add_variadic          function_remove_variadic
 ```
 
 ```c++
 // Function modifying traits taking arguments
 // =========================
-template <Function F, Args...> using function_*_*_t = F_; // modified type;
-template <Function F, Args...> using function_*_* = function_traits<F_>;
+template <Function F, Args...> using function_*_*_t = FuncTr<F>;
+template <Function F, Args...> using function_*_* = function_traits<FuncTr<F>>;
 
   function_add_reference  <F, ref_qual ref>  // 'add' does reference-collapse
   function_set_reference  <F, ref_qual ref>

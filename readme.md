@@ -2,49 +2,52 @@
 
 ## Type traits for properties of C++ function types
 
-### The anatomy of a general C++17 function type:
+**`function_traits`** provide for complete reflection or surgery on function types.
+
+**Anatomy** of a general C++17 function type:
+
+**`template <typename R, typename... P, bool X>`**  
 
 * **`R(P...`**[**`,...`**]**`)`** [**`const`**] [**`volatile`**] [**`&`**|**`&&`**] **`noexcept(X)`**
 
-templated on **`<typename R, typename... P, bool X>`**  
+<details><summary><b>Dissected</b>: a breakdown of the general type, with library API terminology</summary>
 
-* **`R(P...)`** : Function '**signature**'; its **return** type **`R`**, **parameter** types **`P...`** and
-* `R(P...,`**`...`**`)` : existence of C-style **varargs** (denoted by trailing ellipsis **`...`**)
-* `R(P...)` **`noexcept(X)`** : Function **exception** specification; X = true | false
-* `R(P...)` [**`const`**] [**`volatile`**] [**`&`**|**`&&`**] : Function **cvref** qualifiers; **12** combos
+API terms in **bold** with '`A`|`B`' for `A` or `B` alternatives, '[`C`]' for optional `C` term.
 
-**`function_traits`** provide complete reflection / modification of function types.  
-They are useful in generic code that must handle all function types including  
-possibly cvref-qualified function types - the 'abominable'  function types.
+Function **signature**:
 
-<details><summary>More on C++ function types</summary>
+* **`R(P...)`**|**`R(P...,`**`...`**`)`** : **signature** = **return** type **`R`** and **arg** types **`P...`**
 
->**C++ function types** include the types of ordinary C/C++ free functions, e.g.:
+>Here, '**signature**' refers to **return** type **`R`** and **arg** (parameter) types **`P...`**  
+including any C-style varargs (termed '**variadic**', denoted by trailing ellipsis **`...`**)  
+excluding everything after the function parens (i.e. no cvref or exception spec).
 
-    int()                 or  auto() -> int
-    void() noexcept       or  auto() noexcept -> void
-    void(int)             or  auto(int) -> void
-    int(char const*,...)  or  auto(char const*,...) -> int
+Function varargs existence is treated as a (`bool`) property for API purposes:
 
->C++ function types can also have cvref qualifiers:
+* **variadic** : API property name for presence of ellipsis: true | false
 
-    int() const&          or  auto() const& -> int
-    void() && noexcept    or  auto() && noexcept -> void
-    void(int) volatile    or  auto(int) volatile -> void
+Function **noexcept** property (`bool`):
 
->Such cvref-qualified function types are an artifact of the C++ type system.  
-Member functions carry cvref qualifiers for the implicit `*this` reference  
-used in calling the member function, so cvref-qualified function types arise  
-as part of pointer-to-member-function types.
+* **`noexcept(X)`** : Function exception specification; X = true | false
+
+Function **cvref** properties (`bool`, `bool`, `ref_qual`):
+
+* [**`const`**] [**`volatile`**] [**`&`**|**`&&`**] : Function **cvref** qualifiers; 12 combos
+
+>Warning: the **cvref** API terms are familiar from the `std` traits but have  
+different meanings as function type qualifiers (see API refs):
 >
->You cannot declare an ordinary free function with a cvref type and it is  
-forbidden to form a pointer or a reference to a cvref-qualified function type.
->
->The standard type trait `std::is_function_v<F>` is true for all function types.  
->  
->The C++17 standard library doesn't provide other traits for C++ function types  
-(mainly due to the complications caused by the possible cvref qualifers).  
-This library fills in for the lack of function traits in the standard library.
+>* **const**, **volatile**, **cv** (const | volatile)  
+>* **lvalue_reference**, **rvalue_reference**, **reference** (lval | rval)  
+>* **cvref** (const | volatile | reference)
+
+The **cvref** qualifiers divide the function types into two top level categories:
+
+* '**free**' function types, with no cvref qualifiers - the valid types of free functions  
+* **cvref** qualified function types, the so-called 'abominable' function types
+
+Classify with function traits `is_free_function<T>` or `function_is_cvref<F>`
+
 </details>
 
 ----
@@ -83,11 +86,74 @@ DEALINGS IN THE SOFTWARE.
 
 ----
 
-## **Description | Background | Motivation | Aims**
+<details><summary><b>Background</b>: C++ function types, the free & the abominable (P0172)</summary>
+
+* <details><summary>C++ function types</summary>
+
+    The `std` type trait `is_function_v<F>` is true for all C++ function types.
+
+    C++ function types include the types of ordinary C/C++ free functions,  
+    referred to here as 'free' function types:
+
+    ```c++
+    // free function types
+
+      void(int)             or  auto(int) -> void
+      char*() noexcept      or  auto() noexcept -> char*
+      int(char const*,...)  or  auto(char const*,...) -> int
+    ```
+
+    >C++ function types can also have cvref qualifiers:
+
+    ```c++
+      int() const&          or  auto() const& -> int
+      void() && noexcept    or  auto() && noexcept -> void
+      void(int) volatile    or  auto(int) volatile -> void
+    ```
+
+    >Such cvref-qualified function types are an artifact of the C++ type system.  
+Member functions carry cvref qualifiers for the implicit `*this` reference  
+used in calling the member function, so cvref-qualified function types arise  
+as part of pointer-to-member-function types.  
+You cannot declare an ordinary free function with a cvref type and it is  
+forbidden to form a pointer or a reference to a cvref-qualified function type.
+    </details>
+
+* <details><summary>P0172R0 <b>Abominable Function Types</b> by Alisdair Meredith, Nov 2015</summary>
+
+    Quoting from [P0172R0](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0172r0.html) section **2.1,     Definition**:
+
+    >[...] an *abominable* function type is the type produced by writing  
+a function type followed by a cv-ref qualifier.
+
+    Example:
+
+    ```cpp
+     using regular    = void();
+     using abominable = void() const volatile &&;
+    ```
+
+    >In the example above, `regular` names a familiar function type [...],  
+`abominable` also names a function type, not a reference type, and  
+despite appearances, is neither a const nor a volatile qualified type.  
+There is no such thing as a cv-qualified function type in the type system,  
+and the abominable function type is something else entirely.
+    </details>
+
+* <details><summary>Boost.CallableTraits: A P0172 implementation and more</summary>
+
+    >[Boost.CallableTraits](https://www.boost.org/doc/libs/develop/libs/callable_traits/doc/html/) implements P0172R0's suggested library interface,  
+extended to support general [Callable](https://en.cppreference.com/w/cpp/named_req/Callable) types on top of C++ function types.  
+It is a robust, reviewed library with tests, compatibility matrix and CI.
+    </details>
+
+</details>
+
+## **Description | Motivation | Aims**
 
 <details><summary><b>Description</b></summary>
 
-**Type trait**: a template-based interface to query or modify the properties of types.
+   **Type trait**: a template-based interface to query or modify the properties of types.
 
 >**`function_traits`** is a library of traits for C++17 function types -  
 no more, no less; it does not provide traits for general [Callable](https://en.cppreference.com/w/cpp/named_req/Callable) types  
@@ -99,45 +165,16 @@ The library uses `namespace ltl` for its traits, types and functions.
 >It targets C++17 on recent gcc / clang / msvc compilers.  
 Backwards compatibility, for older compilers or for pre-17, is not a priority.  
 It is an 'alpha' design with an experimental interface, subject to change.  
-Once C++20 is available, constraints will be added to improve error reporting. 
-
-</details>
-
-<details><summary><b>Background</b>: P0172R0 Abominable Function Types</summary>
-
-Quoting from [P0172R0](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0172r0.html) section 2.1, Definition:
-
->[...] an *abominable* function type is the type produced by writing a function type  
-followed by a cv-ref qualifier.
-
-Example:
-
-```cpp
-   using regular    = void();
-   using abominable = void() const volatile &&;
-```
-
->In the example above, `regular` names a familiar function type [...] no surprises,  
-`abominable` also names a function type, not a reference type, and  
-despite appearances, is neither a const nor a volatile qualified type.  
-There is no such thing as a cv-qualified function type in the type system,  
-and the abominable function type is something else entirely.
-
-* P0172R0 **Abominable Function Types** by Alisdair Meredith, Nov 2015
-
-</details>
-
-<details><summary>Boost.CallableTraits: A P0172 implementation and more</summary>
-
->[Boost.CallableTraits](https://www.boost.org/doc/libs/develop/libs/callable_traits/doc/html/) implements P0172R0's suggested library interface,  
-extended to support general [Callable](https://en.cppreference.com/w/cpp/named_req/Callable) types on top of C++ function types.  
-It is a robust, reviewed library with tests, compatibility matrix and CI.
+Once C++20 is available, constraints will be added.
 
 </details>
 
 <details><summary><b>Motivation</b>: Provide the 24 (or 48) required specializations</summary>
 
 See also [Boost.CallableTraits Motivation](https://www.boost.org/doc/libs/develop/libs/callable_traits/doc/html/index.html#callable_traits.introduction.motivation)
+
+**`function_traits`** are necessary to reflect the properties of function types.  
+They may be useful in generic code that must handle general function types.
 
 >'Abominable' function cvref qualifiers cannot be deduced concisely.  
 C-style varargs - a trailing ellipsis ... - cannot be deduced concisely.  
@@ -281,7 +318,7 @@ These 48 specializations are also listed in [Boost.CallableTraits](https://www.b
     **Complete**: provide a way to do any query or modification that may be needed;  
     if you see something that is not reasonably easy to do then open an issue.
 
-    **Minimal**: avoid bloat and duplication in the interface (not that easy).  
+    **Minimal**: avoid bloat and duplication in the interface (not easy; >50 traits!).  
     Narrow scope, single responsibility - function traits only, no more, no less.
     </details>
 
@@ -321,49 +358,49 @@ Here, the `ltl` include directory reflects `function_traits` namespace, `ltl`:
 #include <ltl/function_traits.hpp>
 ```
 
-Or, just cut and paste the header 
+Or, just cut and paste the header.
 
-All `function_traits` are defined only for function types; it is an error to  
-instantiate a function trait with a non-function type template parameter.  
-This is reflected in the naming, with 'function' always first; `function_*`.
+All `function_*` traits are defined only for function types;
+
+>Calling a `function_*` trait with a non function type gives a hard,  
+non-SFINAE, error (with a nasty error message from the compiler).
 
 ```c++
-  ltl::function_is_noexcept_v< int > // compile error
+  ltl::function_is_cvref< int > // compile error
 ```
 
-To use function traits with non-function types, guard the trait instantiation  
-with an `if constexpr` `std::is_function_v` block (or overload with constraints). 
+The `function_is_*` predicate traits have SFINAE-friendly siblings:
 
->(Using a function trait with a non function type gives a hard, non-SFINAE, error  
-with a nasty error message from the compiler.)
+```c++
+  ltl::is_function_cvref< int > // empty class
+```
+
+Other `function_*` traits have no safe / SFINAE-friendly variants.  
+To use these function traits with non-function types, you can guard the trait  
+instantiation with `if constexpr (is_function_v<T>)`:
+
+```c++
+template <typename F>
+inline constexpr bool is_free_function_v = []{
+             if constexpr (is_function_v<F>)
+                 return !function_is_cvref_v<F>;
+             return false; }();
+```
+
+(`conditional_t` doesn't work here as both branches instantiate.)
 
 </details>
 
 <details><summary>Predicate traits and type property traits</summary>
 
->First, put the header file where you want it and configure your include path.  
-Here, the `ltl` include directory reflects `function_traits` namespace, `ltl`:
+>Test if a function type is variadic and const and noexcept:  
 
 ```c++
-#include <ltl/function_traits.hpp>
-```
-
-All `function_traits` are defined only for function types; it is an error to  
-instantiate a function trait with a non-function type template parameter.  
-This is reflected in the naming, with 'function' always first; `function_is_*`.  
-To use function traits with non-function types you must guard with `is_function`. 
-
->(Using a function trait with a non function type gives a hard, non-SFINAE, error  
-with a nasty error message from the compiler.)
->
->Test if a function type is const / cvref / noexcept:  
-
-```c++
-  using Fc = void() const noexcept;
+  using Fc = void(...) const noexcept;
 
   static_assert(
-          ltl::function_is_const_v< Fc >
-       && ltl::function_is_cvref_v< Fc >
+          ltl::function_is_variadic_v< Fc >
+       && ltl::function_is_const_v< Fc >
        && ltl::function_is_noexcept_v< Fc >
   );
 ```
@@ -382,27 +419,6 @@ with a nasty error message from the compiler.)
                    , std::tuple< char, bool(*)() >
      >
   );
-```
-
->A standalone predicate trait is provided to check that a function type  
-is a valid free function type, i.e. it has no 'abominable' cvref qualifiers:  
-
-```c++
-  void f() noexcept;
-
-  static_assert( ltl::is_free_function_v<decltype(f)> );
-```
-
-`is_free_function` is defined for all types (it is `false` for non-function types):
-
-For example, `is_free_function_v` is :
-
-```c++
-template <typename F>
-inline constexpr bool is_free_function_v = []{
-         if constexpr(std::is_function_v<F>)
-           return !function_is_cvref_v<F>;
-         return false; }();
 ```
 
 </details>
@@ -440,8 +456,8 @@ Setters for function cv qualifiers, noexcept and variadic take `bool` arguments:
                     function_set_noexcept_t<void(), true> >);
 ```
 
->The `set` trait for reference qualifiers takes a `ltl::ref_qual_v` argument  
-(an enum type with values `lval_ref_v`, `rval_ref_v` or `ref_qual_v{}`)
+>The `set` trait for reference qualifiers takes a `ltl::ref_qual` argument  
+(an enum type with values `lval_ref_v`, `rval_ref_v` or `null_qual_v`)
 
 ```c++
     static_assert(
@@ -450,15 +466,18 @@ Setters for function cv qualifiers, noexcept and variadic take `bool` arguments:
     );
 ```
 
->There is a `function_add_reference<F,R>` trait that does reference collapse  
-such that 'adding' an rvalue-ref to an lvalue-ref gives an lvalue-ref, consistent with  
-`std::add_rvalue_reference` for object types, `&` + `&&` => `&`, even though  
-reference collapse is not necessarily natural for function reference qualifiers.
->
->There are no `function_add_reference_lvalue` / `_rvalue` traits.  
-Instead, there are `function_set_reference_lvalue` / `_rvalue` traits  
-(read as "given a function type, set its reference qualifier to lvalue reference")  
-(unlike other setters, but like `add` traits, they take no arguments).
+>Reference collapse is not necessarily natural for function reference qualifiers.  
+If you need it, `function_add_reference<F,R>` does reference collapse
+
+```c++
+    static_assert(
+       std::is_same_v< function_add_reference_t<void() &, rval_ref_v>
+                                                void() & >
+    );
+```
+
+>('adding' an rvalue-ref to an lvalue-ref yields an lvalue-ref, consistent with  
+`std::add_rvalue_reference` for ordinary reference types; `&` + `&&` => `&`)
 >
 >Setters for type properties take type arguments; to change function return type:
 

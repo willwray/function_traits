@@ -2,18 +2,30 @@
 
 ## Type traits for properties of C++ function types
 
-**`function_traits`** provide for complete reflection or surgery on function types.
+Complete reflection of C++ function types  and modification of their properties. 
 
 **Anatomy** of a general C++17 function type:
 
-**`template <typename R, typename... P, bool X>`**  
-**`using function = R(P...`**[**`,...`**]**`)`** [**`const`**] [**`volatile`**] [**`&`**|**`&&`**] **`noexcept(X)`**
+```c++
+template <typename R, typename... P, bool X>
+using function
+      = R(P...[,...]) [const] [volatile] [&|&&] noexcept(X);
+```
 
-<details><summary><b>Dissected</b>: a breakdown of the general type, with library API terminology</summary>
+<details><summary><b>Dissected</b><br> - a breakdown of the general type, with library API terminology</summary>
 
->API terms in **bold** with '`A`|`B`' for `A` or `B` alternatives, '[`C`]' for optional `C` term.
+>'`A`|`B`' for `A` or `B` alternatives - '[`C`]' for optional `C` term:
 
-Function **signature**:
+```c++
+/*    _signature_    ________cvref________    noexcept_
+     |           |  |                     |  |         |  */
+     R(P...[,...]) [const] [volatile] [&|&&] noexcept(X);
+/*          |  |    |____   _______|   |  |
+/*        variadic       cv          reference            */
+/*                                lvalue | rvalue          */
+```
+
+Function **signature** (all API terms in **bold**):
 
 * **`R(P...)`**|**`R(P...,`**`...`**`)`** : **signature** = **return** type **`R`** and **arg** types **`P...`**
 
@@ -33,7 +45,7 @@ Function **cvref** properties (`bool`, `bool`, `ref_qual`):
 
 * [**`const`**] [**`volatile`**] [**`&`**|**`&&`**] : Function **cvref** qualifiers; 12 combos
 
->Warning: the **cvref** API terms are familiar from the `std` traits but have  
+>Warning: the **cvref** API terms may be familiar from the `std` traits but have  
 different meanings as function type qualifiers (see API refs):
 >
 >* **const**, **volatile**, **cv** (const | volatile)  
@@ -45,7 +57,7 @@ The **cvref** qualifiers divide the function types into two top level categories
 * '**free**' function types, with no cvref qualifiers - the valid types of free functions  
 * **cvref** qualified function types, the so-called 'abominable' function types
 
-Classify with function traits `is_free_function<T>` or `function_is_cvref<F>`
+Test with function traits `is_free_function<T>` or `function_is_cvref<F>`
 
 </details>
 
@@ -152,7 +164,8 @@ It is a robust, reviewed library with tests, compatibility matrix and CI.
 
 <details><summary><b>Description</b></summary>
 
-   **Type trait**: a template-based interface to query or modify the properties of types.
+>* **Type trait**:  
+a template-based interface to query or modify the properties of types.
 
 >**`function_traits`** is a library of traits for C++17 function types -  
 no more, no less; it does not provide traits for general [Callable](https://en.cppreference.com/w/cpp/named_req/Callable) types  
@@ -170,9 +183,9 @@ Once C++20 is available, constraints will be added.
 
 <details><summary><b>Motivation</b>: Provide the 24 (or 48) required specializations</summary>
 
-See also [Boost.CallableTraits Motivation](https://www.boost.org/doc/libs/develop/libs/callable_traits/doc/html/index.html#callable_traits.introduction.motivation)
+>See also [Boost.CallableTraits Motivation](https://www.boost.org/doc/libs/develop/libs/callable_traits/doc/html/index.html#callable_traits.introduction.motivation)
 
-**`function_traits`** are necessary to reflect the properties of function types.  
+**Function traits** are necessary to reflect the properties of function types.  
 They may be useful in generic code that must handle general function types.
 
 >'Abominable' function cvref qualifiers cannot be deduced concisely.  
@@ -190,15 +203,17 @@ a possibly abominable or variadic function type:
 >It is tedious to have to write all of the necessary specializations.  
 This library provides the specializations wrapped up as function traits.
 >
->### Copy traits
->I wanted traits to copy qualifiers from source to target function types<sup>1</sup>.  
-Since all 24/48 specializations are needed to implement *any* function trait  
+>**'Setter' traits**
+>
+>I wanted traits to copy qualifiers from source to target function types (e.g.   
+Boost.CallableTraits has an open [issue](https://github.com/boostorg/callable_traits/issues/139) to add a `copy_member_cvref` trait  
+and `std::copy_*` traits are proposed in [P1016](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1016r0.pdf) "...type manipulation utilities")
+>
+>Since all 24/48 specializations are needed to implement *any* function trait  
 with full generality, one might as well write a full collection of traits.
 >
->[1] C++ standard library `copy_*` traits are proposed in [P1016](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1016r0.pdf)  
-"A few additional type manipulation utilities" (unlikely to be in C++20).  
-Copy traits like this are not implemented yet in Boost.CallableTraits  
-though there's an open [issue](https://github.com/boostorg/callable_traits/issues/139) to add a `copy_member_cvref` trait.
+>
+
 >
 >This function_traits library provides a couple of options:  
 >`function_set_cvref_as<F,G>` copies `G`'s cvref qualifiers to `F`, or  

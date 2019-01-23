@@ -203,19 +203,16 @@ a possibly abominable or variadic function type:
 >It is tedious to have to write all of the necessary specializations.  
 This library provides the specializations wrapped up as function traits.
 >
+>Since all 24/48 specializations are needed to implement *any* function trait  
+with full generality, one might as well write a full collection of traits.
+>
 >**'Setter' traits**
 >
 >I wanted traits to copy qualifiers from source to target function types (e.g.   
 Boost.CallableTraits has an open [issue](https://github.com/boostorg/callable_traits/issues/139) to add a `copy_member_cvref` trait  
 and `std::copy_*` traits are proposed in [P1016](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1016r0.pdf) "...type manipulation utilities")
 >
->Since all 24/48 specializations are needed to implement *any* function trait  
-with full generality, one might as well write a full collection of traits.
->
->
-
->
->This function_traits library provides a couple of options:  
+>This library provides a couple of options:  
 >`function_set_cvref_as<F,G>` copies `G`'s cvref qualifiers to `F`, or  
 `function_set_signature<G, function_signature_t<F>>`  
 effectively copies `G`'s cvref qualifiers and exception spec to `F`'s signature.
@@ -428,9 +425,9 @@ inline constexpr bool is_free_function_v = []{
   static_assert(
      std::is_void_v< ltl::function_return_type_t< Fcb > >
   && std::is_same_v< ltl::function_arg_types< Fcb, std::tuple >
-                   , std::tuple< char, bool(*)() >
-     >
-  );
+                   , std::tuple< char, bool(*)() > >
+  ); //                                    ^^^
+     //                               note decay
 ```
 
 </details>
@@ -438,7 +435,7 @@ inline constexpr bool is_free_function_v = []{
 <details><summary>Modifying traits; add / remove and set traits</summary>
 
 >Conventional `add_*`, `remove_*` traits modify the given property `*`.  
-They take no arguments beyond the function type to modify:
+They generally take no arguments beyond the function type to modify:
 
 ```c++
   using namespace ltl;
@@ -469,7 +466,7 @@ Setters for function cv qualifiers, noexcept and variadic take `bool` arguments:
 ```
 
 >The `set` trait for reference qualifiers takes a `ltl::ref_qual` argument  
-(an enum type with values `lval_ref_v`, `rval_ref_v` or `null_qual_v`)
+(an enum type with values `lval_ref_v`, `rval_ref_v` or `null_ref_v`)
 
 ```c++
     static_assert(
@@ -499,8 +496,8 @@ If you need it, `function_add_reference<F,R>` does reference collapse
                                                   void() >);
 ```
 
->`set_*_as` traits provide a way to copy properties to the target function type  
-from a source function type template argument - e.g. to copy cvref qualifiers:
+>The `set_cvref_as` trait provides a way to copy qualifiers to the target function type  
+from a source function type:
 
 ```c++
     static_assert( std::is_same_v<
@@ -512,7 +509,7 @@ from a source function type template argument - e.g. to copy cvref qualifiers:
 
 <details><summary>A small example of function_traits usage</summary>
 
-An illustrative example that type-checks `printf`-like member functions that may  
+A contrived example that type-checks `printf`-like member functions that may  
 or may not be variadic, then forwards a C++ argument pack to the C varargs  
 (the vargs could be matched and type checked against the format string).
 

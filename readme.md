@@ -27,7 +27,7 @@ using
 
 Function **signature** (all API terms in **bold**):
 
-* **`R(P...)`**|**`R(P...,`**`...`**`)`** : **signature** = **return** type `R` and **arg** types `P...`
+* **`R(P...)`**|**`R(P...,...)`** : **signature** = **return** type `R` and **arg** types `P...`
 
 >Here, '**signature**' refers to **return** type `R` and **arg** (parameter) types `P...`  
 including any C-style varargs (termed '**variadic**', denoted by trailing ellipsis **`...`**)  

@@ -8,8 +8,8 @@ Complete reflection of C++ function types  and modification of their properties.
 
 ```c++
 template <typename R, typename... P, bool X>
-using function
-      = R(P...[,...]) [const] [volatile] [&|&&] noexcept(X);
+using
+  function = R(P...[,...]) [const] [volatile] [&|&&] noexcept(X);
 ```
 
 <details><summary><b>Dissected</b><br> - a breakdown of the general type, with library API terminology</summary>
@@ -17,19 +17,19 @@ using function
 >'`A`|`B`' for `A` or `B` alternatives - '[`C`]' for optional `C` term:
 
 ```c++
-/*    _signature_    ________cvref________    noexcept_
-     |           |  |                     |  |         |  */
-     R(P...[,...]) [const] [volatile] [&|&&] noexcept(X);
-/*          |  |    |____   _______|   |  |
-/*        variadic       cv          reference            */
-/*                                lvalue | rvalue          */
+//            _signature_    ________cvref________    noexcept_
+//           |           |  |                     |  |         |
+  function = R(P...[,...]) [const] [volatile] [&|&&] noexcept(X);
+//                  |  |    |____   _______|   |  |
+//                variadic       cv          reference
+//                                        lvalue | rvalue
 ```
 
 Function **signature** (all API terms in **bold**):
 
-* **`R(P...)`**|**`R(P...,`**`...`**`)`** : **signature** = **return** type **`R`** and **arg** types **`P...`**
+* **`R(P...)`**|**`R(P...,`**`...`**`)`** : **signature** = **return** type `R` and **arg** types `P...`
 
->Here, '**signature**' refers to **return** type **`R`** and **arg** (parameter) types **`P...`**  
+>Here, '**signature**' refers to **return** type `R` and **arg** (parameter) types `P...`  
 including any C-style varargs (termed '**variadic**', denoted by trailing ellipsis **`...`**)  
 excluding everything after the function parens (i.e. no cvref or exception spec).
 

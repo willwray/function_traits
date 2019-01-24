@@ -1,4 +1,4 @@
-//    Copyright (c) 2018 Will Wray https://keybase.io/willwray
+//    Copyright (c) 2019 Will Wray https://keybase.io/willwray
 //
 //   Distributed under the Boost Software License, Version 1.0.
 //          (http://www.boost.org/LICENSE_1_0.txt)
@@ -396,7 +396,7 @@ struct empty_base {};
 //  empty_base  for non-function type F, or
 //  P<F>        for function type F (P<F> = std::true_type | std::false_type)
 template <template <typename> typename P, typename F>
-constexpr auto pred_base = []
+constexpr auto pred_base()
 {
   if constexpr (is_function_v<F>) {
     return (P<F>){};

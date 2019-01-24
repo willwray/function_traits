@@ -180,7 +180,7 @@ For`*` in `const`, `volatile`, `cv`, `cvref`, `noexcept`, `variadic`,
 `function_signature<F>` returns just the `R(P...)` or `R(P...,...)`  
 'signature' (so could be called `function_remove_cvref_noexcept`)
 
-* [Add / remove traits](#add-remove-traits): `function_add_*<F>`, `function_remove_*<F>`  
+* [Add / remove traits](#add-/-remove-traits): `function_add_*<F>`, `function_remove_*<F>`  
 (with no Args) For`*` in `const`, `volatile`, `noexcept`, `variadic`  
 (with no Args) `function_remove_cvref<F>` (no add; remove only)  
 (with no Args) `function_remove_reference<F>` (remove only)  
@@ -192,6 +192,7 @@ For`*` in `const`, `volatile`, `cv`, `cvref`, `noexcept`, `variadic`,
 (two bool Args, C,V) `function_set_cv<F,C,V>`  
 (one ref_qual Arg) `function_set_reference<F,ref_qual>`  
 (two bool, one ref) `function_set_cvref<F,C,V,ref_qual>`  
+(one ret-type arg) `function_set_return_type<F,R>`  
 (one signature Arg) `function_set_signature<F,FuncSig>`
 
 * [Copy trait](#copy-trait): `function_set_cvref_as<F,G>`  
@@ -262,6 +263,8 @@ which the '`add`' trait implementing reference collapse behaviour:
 
 ## Predicate traits
 
+Predicate traits test a true-or-false property of a type
+
 'Top level' predicates, `is_function` and `is_free_function` evaluate true | false  
 for any C++ type
 (type trait inherits from `std::true_type` | `std::false_type`).
@@ -278,8 +281,8 @@ The remaining function predicate traits treat non-function types differently:
 
 A pair of 'top level' predicate traits classify C++ function types among all C++ types:
 
-* `ltl::is_function<T>` equivalent to [`std::is_function`](https://en.cppreference.com/w/cpp/types/is_function)
-* `ltl::is_free_function<T>` true for `T` a non-cvref-qualified function type
+* **`ltl::is_function<T>`** equivalent to [`std::is_function`](https://en.cppreference.com/w/cpp/types/is_function)
+* **`ltl::is_free_function<T>`** true for `T` a non-cvref-qualified function type
 
 ```C++
 template <typename T> struct is_*function : bool_constant<P<T>> {};
@@ -289,7 +292,7 @@ template <typename T>
 
 #### `is_function`
 
-Use `ltl::is_function` in preference to `std::is_function` in a condition  
+Use **`ltl::is_function`** in preference to `std::is_function` in a condition  
 guarding instantiation of a function trait (because it saves redundant work)  
 (for example, see implementation of `is_free_function_v` next).
 
@@ -299,7 +302,7 @@ Checks if the argument type is a free function type:
 >`true` if `F` is a function type without cvref qualifiers  
 `false` if `F` is not a function type or is a cvref qualified function type 
 
-Example implementation of `is_free_function_v`
+Example implementation of **`is_free_function_v`**
 
 ```c++
 template <typename F>
@@ -321,15 +324,15 @@ template <typename T> struct is_function_* : predicate_base<P,T> {};
 
 Note: no `_v` suffix variant - use equivalent `function_is_*_v`
 
-* `is_function_const`
-* `is_function_volatile`
-* `is_function_cv`
-* `is_function_reference`
-* `is_function_lvalue_reference`
-* `is_function_rvalue_reference`
-* `is_function_cvref`
-* `is_function_noexcept`
-* `is_function_variadic`
+* **`is_function_const`**
+* **`is_function_volatile`**
+* **`is_function_cv`**
+* **`is_function_reference`**
+* **`is_function_lvalue_reference`**
+* **`is_function_rvalue_reference`**
+* **`is_function_cvref`**
+* **`is_function_noexcept`**
+* **`is_function_variadic`**
 
 #### Simple predicates: `function_is_*`
 
@@ -344,15 +347,15 @@ As value trait `_v`, evaluate true | false
 
 Compile fail for non-function type arguments.
 
-* `function_is_const`
-* `function_is_volatile`
-* `function_is_cv`
-* `function_is_reference`
-* `function_is_lvalue_reference`
-* `function_is_rvalue_reference`
-* `function_is_cvref`
-* `function_is_noexcept`
-* `function_is_variadic`
+* **`function_is_const`**
+* **`function_is_volatile`**
+* **`function_is_cv`**
+* **`function_is_reference`**
+* **`function_is_lvalue_reference`**
+* **`function_is_rvalue_reference`**
+* **`function_is_cvref`**
+* **`function_is_noexcept`**
+* **`function_is_variadic`**
 
 ----
 
@@ -360,8 +363,8 @@ Compile fail for non-function type arguments.
 
 Reflect reference qualification of a type by returning an enumerated value.
 
-* `function_reference_v<F>` for function type reference qualification
-* `reference_v<T>` for ordinary top-level reference qualification
+* **`function_reference_v<F>`** for function type reference qualification
+* **`reference_v<T>`** for ordinary top-level reference qualification
 
 Evaluate to a value of enum type `ltl::ref_qual`
 
@@ -374,7 +377,7 @@ template <Function F>
      inline constexpr ref_qual function_reference_v = FuncRefQual<F>;
 ```
 
-The addition operator for `ref_qual` values is defined to do reference collapse:
+The **addition operator** for `ref_qual` values is defined to do reference collapse:
 
 ```c++
 constexpr ref_qual operator+( ref_qual a, ref_qual b);
@@ -386,8 +389,8 @@ constexpr ref_qual operator+( ref_qual a, ref_qual b);
 
 These traits are 'getters' for function return type and  arg types:
 
-* `function_return_type<F>` returns the return type of F
-* `function_arg_types<F>` returns a type-list of parameter types of F
+* **`function_return_type<F>`** returns the return type of F
+* **`function_arg_types<F>`** returns a type-list of parameter types of F
 
 ```c++
 template <typename F> using function_return_type_t = /* Return type of F */
@@ -403,14 +406,17 @@ For example, to get the parameter types of a function type in a `std::tuple`:
 
 ```c++
   ltl::function_arg_types< int(char, bool[4]), std::tuple >;
+  // Evaluates to std::tuple< char, bool* >
+  // Note the usual decay in array type function arguments
 ```
 
->Returns `std::tuple< char, bool* >` (note the usual decay in array type)
+>There is no corresponding '`set`' trait to set the argument types (instead, construct  
+and set the function signature, including return type and possible varargs).
 
 The function signature getter could be called `function_remove_cvref_noexcept`  
 (and so included in the next section on add and remove traits)
 
-* `function_signature<F>` returns just the `R(P...)` or `R(P...,...)`
+* **`function_signature<F>`** returns just the `R(P...)` or `R(P...,...)`
 
 ```c++
 template <typename F> using function_signature_t = /* function signature */
@@ -420,28 +426,32 @@ using function_signature = function_traits<function_signature_t<F>>;
 
 ----
 
-## Add remove traits
+## Add / remove traits
 
-* `function_add_*<F>`
-* `function_remove_*<F>`
 
-For`*` in `const`, `volatile`, `noexcept`, `variadic`
+* **`function_add/remove_const`**
+* **`function_add/remove_volatile`**
+* **`function_add/remove_noexcept`**
+* **`function_add/remove_variadic`**
 
-* `function_remove_*<F>` (remove only)
+Remove-only:
 
-For* in `reference`, `cvref`
+* **`function_remove_reference`**
+* **`function_remove_cvref`**
+
+```c++
+template <Function F> using function_**_t = FuncTr<F>;
+template <Function F> using function_** = function_traits<FuncTr<F>>;
+```
 
 The above are all modifying traits that take no arguments.
 
 The trait to 'add' a reference qualifier takes an argument of type `ref_qual`  
 and 'adds' it to any existing reference qualifier, performing reference collapse:
 
-* `function_add_reference<F,ref_qual>` (ref-collapse)
+* **`function_add_reference<F,ref_qual>`** (ref-collapse)
 
 ```c++
-template <Function F> using function_**_t = FuncTr<F>;
-template <Function F> using function_** = function_traits<FuncTr<F>>;
-
 template <typename F, ref_qual R>
 using function_add_reference =
       function_set_reference<F, function_reference_v<F> + R>;
@@ -454,82 +464,80 @@ using function_add_reference_t =
 
 ## Set traits
 
+```c++
+template <Function F, Args...> using function_**_t = FuncTr<F,Args...>;
+template <Function F, Args...> using function_** = function_traits<
+                                                     FuncTr<F,Args...>>;
+```
+
+Reference qualifier setter, takes one `ref_qual` Arg. No reference collapse  
+(see `function_add_reference` above for trait with reference collapse):
+
+One `ref_qual` Arg:
+
+* **`function_set_reference  <F, ref_qual ref>`**
+
+One `bool` Arg:
+
+* **`function_set_const     <F, bool C>`**
+* **`function_set_volatile  <F, bool V>`**
+* **`function_set_noexcept  <F, bool NX>`**
+* **`function_set_variadic  <F, bool Varg>`**
+
+Two `bool` Args:
+
+* **`function_set_cv        <F, bool C, bool V>`**
+
+Two `bool`, one `ref_qual` Arg:
+
+* **`function_set_cvref     <F, bool C, bool V, ref_qual ref>`**
+
+Other Args:
+
+* **`function_set_return_type <F, R>`**
+* **`function_set_signature   <F, FuncSig>`**
+
+Setting return type requires a valid return type (not array or function type).  
+Setting signature requires FuncSig is a simple function signature argument.  
+
 ----
 
 ## Copy trait
 
+* **`function_set_cvref_as    <F, Function FuncSource>`**
+
+This is a particular case of the previous section "Set traits".  
+It is provided for convenience in copying cvref qualifiers from a  
+source to a target function type:
+
+```c++
+template <Function F, Function S>
+using function_set_cvref_as =
+      function_set_cvref<F, function_is_const_v<S>,
+                            function_is_volatile_v<S>,
+                            function_reference_v<S>>;
+```
+
+with similar implementation for `function_set_cvref_as_t` alias trait.
+
+### Other copy techniques
+
+Clearly, individual properties can be copied in the same way as above, using  
+`function_set_*` traits and predicates or 'getter' traits for the properties.
+
+`function_set_signature`, in particular, can copy cvref and noexcept  
+from a source to a target function type:
+
+```c++
+  function_set_signature<S, function_signature_t<F>>
+```
+effectively copies `S`'s cvref qualifiers and exception spec to `F`'s signature  
+(note the reversed Args - it actually copies `F`'s signature to `S`)
+
+```c++
+template <Function F, Function S>
+using function_set_cvref_noexcept_as =
+      function_set_signature<S, function_signature_t<F>>;
+```
+
 ----
-
-## function_traits and P0172 equivalent
-
-| function_trait\<F\>  | P0172R0 / callable_trait\<F\>  |
-|----|----|
-| `is_function_*<F>`|`is_*_member<F>`|
-
-<details><summary><b>Predicate</b> traits</summary>
-
-Predicate traits test a true-or-false property of a type  
-returning a type derived from [`std::bool_constant`](https://en.cppreference.com/w/cpp/types/integral_constant)  
-i.e. inherited from `std::true_type` or `std::false_type`  
-
-The bool value itself can be extracted from the `bool_constant`  
-via its `value` member or by invoking its function call operator.  
-Alternatively, a `_v` suffix defines a templated boolean variable -  
-i.e. `is_*_v` directly gives `true` or `false` value for property `*`.  
-For example, these are all equivalent:
-
-    function_is_noexcept<F>::value
-    function_is_noexcept<F>()
-    function_is_noexcept_v<F>
-
-|function_trait\<F\>  | P0172R0 / callable_trait\<F\>  |
-|----|----|
-|`is_free_function<F>`|`not has_member_qualifiers<F>`|
-
-|function_trait\<F\>  | P0172R0 / callable_trait\<F\>  |
-|----|----|
-|`is_free_function<F>`|`not has_member_qualifiers<F>`|
-|`function_is_const<F>`|`is_const_member<F>`|
-|`function_is_volatile<F>`|`is_volatile_member<F>`|
-|`function_is_cv<F>` (Note: const *OR* volatile)| `is_cv_member<F>` (Note: const *AND* volatile)|
-|`function_is_lvalue_reference<F>`|`is_lvalue_reference_member<F>`|
-|`function_is_rvalue_reference<F>`|`is_rvalue_reference_member<F>`|
-|`function_is_reference<F>`|`is_reference_member<F>`|
-|`function_is_cvref<F>`|`has_member_qualifiers<F>`|
-|`function_is_noexcept<F>`|`is_noexcept<F>`|
-|`function_is_variadic<F>`|`has_varargs<F>`|
-
-</details>
-
-<details><summary><b>Modifying traits</b>: add | remove</summary>
-
-|function_trait\<F\>  | P0172R0 / callable_trait\<F\>  |
-|----|----|
-|`function_add_const<F>`<br>`function_set_const<F,true>`<br>`function_set_cv<F,true,false>`|`add_member_const<F>`|
-|`function_remove_const<F>`|`remove_member_const<F>`|
-|`function_add_volatile<F>`<br>`function_set_volatile<F,true>`<br>`function_set_cv<F,false,true>`|`add_member_volatile<F>`|
-|`function_remove_volatile<F>`|`remove_member_volatile<F>`|
-|`function_set_cv<F,true,true>`|`add_member_cv<F>`|
-|`function_remove_cv<F>`|`remove_member_cv<F>`|
-|`function_set_reference_lvalue<F>`<br>`function_set_reference<F,lval_ref_v>`|`add_member_lvalue_reference<F>`|
-|`function_set_reference_rvalue<F>`<br>`function_set_reference<F,rval_ref_v>`|`add_member_rvalue_reference<F>`|
-|`function_remove_reference<F>`|`remove_member_reference<F>`|
-|`function_remove_cvref<F>`| c.f. `function_type`|
-|`function_signature<F>`<br>`function_signature_noexcept<F>`<br>`function_remove_cvref<F>`|`function_type<F>`|
-|`function_set_cvref<F,bool,bool,ref>`<br>`function_set_cvref_as<F,G>`||
-|`function_add_noexcept<F>`<br>`function_set_noexcept<F,true>`|`add_noexcept<F>`|
-|`function_remove_noexcept<F>`<br>`function_set_noexcept<F,false>`|`remove_noexcept<F>`|
-|`function_add_variadic<F>`<br>`function_set_variadic<F,true>`|`add_varargs<F>`|
-|`function_remove_variadic<F>`|`remove_varargs<F>`|
-|`function_set_return_type<F,R>`|`apply_return<F,R>`|
-|`function_set_signature<F,S>`||
-|`function_arg_types<F,tuple_type>`|`args<F,tuple_type>`|
-|`function_return_type<F>`|`return_type<F>`|
-|`function_signature<F>`| c.f. `function_type`|
-||`qualified_class_of<F>`|
-||`remove_transaction_safe<F>`|
-||`add_transaction_safe<F>`|
-||`class_of<F>`|
-||`apply_member_pointer<F>`|
-
-</details>

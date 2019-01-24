@@ -1,25 +1,14 @@
 # `function_traits` reference
 
-### `namespace ltl`
-`ltl` is the namespace for all traits and utilities in `function_traits`  
-(pronounce it as you like; LTL as in STL or 'litl' as 'little Italy' said fast).
+## `namespace ltl`
+
+`ltl` is the namespace for all traits and utilities in `function_traits`.  
+>Pronounce it as you like; LTL as in STL or 'litl' as 'little Italy' said fast.
 
 * Traits prefixed with `function_` are defined for C++ function types only  
 * Traits prefixed with `is_` are defined for any C++ type ('safe' predicates)  
 
-A pair of 'top level' predicate traits classify C++ function types among all C++ types:
 
-* `ltl::is_function<T>` equivalent to `std::is_function<T>`
-* `ltl::is_free_function<T>` true for `T` a non-cvref-qualified function type
-
-These two top level predicates evaluate as `std::true_type` or `std::false_type`.  
-The remaining function predicate traits treat non-function types differently:
-
-* `is_function_*<T>` return an empty type for non-function type `T`
-* `function_is_*<T>` cause a compile error on non-function type `T`  
-(all `function_*<T>` traits give a compile error on non-function `T`).
-
-(`is_function_*` is the 'safe' or 'SFINAE-friendly' version of `function_is_*`).  
 
 
 ## Synopsis
@@ -31,15 +20,15 @@ The remaining function predicate traits treat non-function types differently:
 // ===
   template <typename T> // Indicates trait is defined for all C++ types T
   template <Function F> // Indicates trait is defined for function types F
-                        // only (concept Function = is_function_v<F>)
+                        // *only* (concept Function = is_function_v<F>)
 
-  P            // For a predicate trait, P is the predicate; type -> bool
+  P            // P is the predicate of a predicate trait; type -> bool
   P<T>, P<F>   // The predicate P evaluated on type T or function type F
 
   predicate_base<P,T> // An empty struct for non-function type T, or
   predicate_base<P,F> // bool_constant<P<F>> for function type F
 
-  FuncTr      // For a function trait, FuncTr is the function type modifier
+  FuncTr      // FuncTr is the function type modifier of a function trait
   FuncTr<F>   // The modified function type result of the function trait
               // (may take Args: FuncTr<F,Args...> : F -> F' function type)
 
@@ -51,13 +40,14 @@ The remaining function predicate traits treat non-function types differently:
 ```
 
 ```c++
-// 'Top level' predicate traits is_*<T>, is_*_v<T>
+// 'Top level' predicate traits is_*function<T>, is_*function_v<T>
 // ============================
-template <typename T> struct is_* : bool_constant<P<T>> {};
-template <typename T> bool is_*_v = bool{P<T>>};
+template <typename T> struct is_*function : bool_constant<P<T>> {};
+template <typename T>
+     inline constexpr bool is_*function_v = bool{P<T>>};
 
-  is_function
-  is_free_function
+  is_function             // equivalent to std::is_function
+  is_free_function        // true for a non-cvref-qualified function type
 ```
 
 ```c++
@@ -79,8 +69,9 @@ template <typename T> struct is_function_* : predicate_base<P,T> {};
 ```c++
 // Function predicate traits function_is_*<F>
 // =========================
-template <Function F> using function_is_*  = bool_constant<P<F>>;
-template <Function F> bool function_is_*_v = bool{<P<F>>};
+template <Function F> using function_is_* = bool_constant<P<F>>;
+template <Function F>
+     inline constexpr bool function_is_*_v = bool{<P<F>>};
 
   function_is_const
   function_is_volatile
@@ -96,51 +87,56 @@ template <Function F> bool function_is_*_v = bool{<P<F>>};
 ```c++
 // Reference qualifier value traits *reference_v<T>
 // ================================
-template <typename T> ref_qual reference_v = RefQual<T>;
-template <function F> ref_qual function_reference_v = FuncRefQual<F>;
+template <typename T>
+     inline constexpr ref_qual reference_v = RefQual<T>;
+template <Function F>
+     inline constexpr ref_qual function_reference_v = FuncRefQual<F>;
 
-  reference_v<T>          // Ordinary top level reference qual value
-  function_reference_v<F> // Function reference qual value
+  reference_v<T>          // Ordinary top level reference qualifier value
+  function_reference_v<F> // Function reference qualifier value
 ```
 
 ```c++
 // Function signature traits
 // =========================
+template <typename F> using function_return_type_t = /* Return type of F */
+template <typename F> struct function_return_type /* class typedef type */
+template <typename F, template <typename...> typename T = ltl::arg_types>
+                      using function_arg_types = T<P...>; // P... arg types
 
-  function_return_type_t // alias to the return type R of function type Arg
+  function_return_type_t // alias to the return type R of F
   function_return_type   // class containing public member type alias for R
-  function_arg_types     // a type-list of function type Arg's param types
+  function_arg_types     // a typelist (arg_types default) of F's arg types
 ```
 
 ```c++
 // Function modifying traits taking no arguments
 // =========================
-template <Function F> using function_*_*_t = FuncTr<F>;
-template <Function F> using function_*_* = function_traits<FuncTr<F>>;
+template <Function F> using function_**_t = FuncTr<F>;
+template <Function F> using function_** = function_traits<FuncTr<F>>;
 
-  function_signature // could be function_remove_cvref_noexcept
+  function_signature // could be 'function_remove_cvref_noexcept'
 
   function_add_const             function_remove_const
   function_add_volatile          function_remove_volatile
-                                 function_remove_cv
-// ^^^^ no add_cv ^^^^
-// vvvv no add_reference vvvv
+/* ***  no add_cv  *** */        function_remove_cv
+
+  function_add_noexcept          function_remove_noexcept
+  function_add_variadic          function_remove_variadic
+
                                  function_remove_reference
   function_set_reference_lvalue
   function_set_reference_rvalue
 
                                  function_remove_cvref
-
-  function_add_noexcept          function_remove_noexcept
-  function_add_variadic          function_remove_variadic
 ```
 
 ```c++
 // Function modifying traits taking arguments
 // =========================
-template <Function F, Args...> using function_*_*_t = FuncTr<F,Args...>;
-template <Function F, Args...> using function_*_* = function_traits<
-                                                      FuncTr<F,Args...>>;
+template <Function F, Args...> using function_**_t = FuncTr<F,Args...>;
+template <Function F, Args...> using function_** = function_traits<
+                                                     FuncTr<F,Args...>>;
 
   function_add_reference  <F, ref_qual ref>  // add does reference-collapse
   function_set_reference  <F, ref_qual ref>  // set does not ref-collapse
@@ -154,34 +150,34 @@ template <Function F, Args...> using function_*_* = function_traits<
 
   function_set_cvref     <F, bool C, bool V, ref_qual ref>
 
-  function_set_return_type <F, R>           // requires R=valid return type
-  function_set_signature   <F, FuncSig>
+  function_set_return_type <F, R>         // requires R = valid return type
+  function_set_signature   <F, FuncSig>   // requires FuncSig = a signature
   function_set_cvref_as    <F, Function FuncSource>
 ```
 
 </details>
 
-## Traits by group
+## Traits indexed by group
 
 Following `std` convention, there are `_t` or `_v` variants as appropriate
 
-* [Top level predicate traits]() classify C++ function types among all C++ types  
+* [Top level predicate traits](#top-level-predicates) classify C++ function types among all C++ types  
 `is_function<T>` equivalent to `std::is_function<T>`  
 `is_free_function<T>` true for `T` a non-cvref-qualified function type
 
-* [Function predicate traits](#predicate-traits): `is_function_*<T>`, `function_is_*<F>`  
+* [Function predicate traits](#function-predicate-traits): `is_function_*<T>`, `function_is_*<F>`  
 For`*` in `const`, `volatile`, `cv`, `cvref`, `noexcept`, `variadic`,  
 `reference`, `lvalue_reference`, `rvalue_reference`
 
-* [Reference value traits](#reference-value): evaluate to a value of enum type `ltl::ref_qual`  
+* [Reference value traits](#reference-value-traits): evaluate to a value of enum type `ltl::ref_qual`  
 `function_reference_v<F>` for function type reference qualification  
 `reference_v<T>` for ordinary top-level reference qualification  
 
 
-* [Signature type traits](#type-traits): 'getters' for function return type and  arg types  
+* [Signature type traits](#signature-type-traits): 'getters' for function return type and  arg types  
 `function_return_type<F>` returns the return type of F  
 `function_arg_types<F>` returns a type-list of parameter types of F  
-`function_signature<F>` returns just the `R(P..)` or `R(P...,...)`  
+`function_signature<F>` returns just the `R(P...)` or `R(P...,...)`  
 'signature' (so could be called `function_remove_cvref_noexcept`)
 
 * [Add / remove traits](#add-remove-traits): `function_add_*<F>`, `function_remove_*<F>`  
@@ -198,32 +194,33 @@ For`*` in `const`, `volatile`, `cv`, `cvref`, `noexcept`, `variadic`,
 (two bool, one ref) `function_set_cvref<F,C,V,ref_qual>`  
 (one signature Arg) `function_set_signature<F,FuncSig>`
 
-* [Copy traits](#copy-traits): `function_set_cvref_as<F,G>`  
+* [Copy trait](#copy-trait): `function_set_cvref_as<F,G>`  
 (`function_set_signature` can copy cvref and noexcept)  
 (individual qualifiers can be copied using `function_set_*` traits)
+
+----
 
 ## Terminology
 
 ### Terms to classify C++ function subtypes</summary>
 
-|function subtype name| has `cvref` qualifiers<br>[`const`] [`volatile`] [`&`\|`&&`] | is `noexcept`<br>`noexcept(true)`|
+|function subtype name| has `cvref` qualifiers<br>[`const`] [`volatile`] [`&`\|`&&`] | is `noexcept`<br>i.e. `noexcept(true)`|
 |-| - |-|
 |'**function**' type<br>(general function type)| don't care<br>(if it has qualifiers or not)| don't care |
 |'**free**' function type<br>('normal', 'ordinary', 'plain') | NO | don't care |
 |function '**signature**' type<br>(a free function subtype) | NO | NO ==<br>`noexcept(false)`|
-|'**abominable**' function type<br>(cvref-qualified function type)| YES | don't care 
+|'abominable' function type<br>(**cvref**-qualified function type)| YES | don't care 
 
 
 >'free' indicates that these subtypes are the valid types of free functions.  
 'signature', as used here, is chosen to exclude any exception spec.  
 'abominable' is a recognised, colloquial, term for 'cvref-qualified'.
 
-</details>
+----
 
 ## Properties of function types
 
-For an introduction to the properties of C++ function types  
-see the [Readme](readme.md) material and reference [P0172R0](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0172r0.html) for starters.
+See the [Readme](readme.md) material and reference [P0172R0](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0172r0.html) for an introduction.
 
 All the properties of a C++ function type are on one level - its signature,  
 cvref qualifiers and exception specification are all equally part of its type.
@@ -232,60 +229,97 @@ For the purposes of this API a function type is broken down as:
 1. Return type `R` and parameter types `P...`  
 2. 'Flags' for its c,v,ref and noexcept properties, and variadic-ness
 
-Function 'property flags':
+Function property 'flags':
 
 * A pair of `bool` flags for `const`, `volatile`
 * A `ref_qual` flag for [`&`|`&&`]  
-(three-valued: no-ref, lvalue-ref or rvalue-ref)
+(`ref_qual` is a 3-valued enum; `null_ref_v`, `lval_ref_v`, `rval_ref_v`)  
 * A `bool` flag for `noexcept(bool)` 
 * A `bool` flag for `R(P...)` or `R(P...,...)`  
 (non-variadic or variadic function signature).
 
 
-'`add`' and '`remove`' are not the best names for traits to modify function properties  
-as these conventional terms imply compounding or reference-collapsing.  
+Function properties are modified by '`add`', '`remove`' and '`set`' traits.  
+Generally, '`add`' and '`remove`' traits modify a fully named property, so take no  
+extra arguments, while '`set`' traits take arguments for property 'flag' values to set.  
 
+Reference qualifiers are the exception, because '`add`' implies reference-collapse  
+(which is not necessarily a natural semantics for function reference qualifiers).  
+The 'no argument' traits are called '`set`' (rather than '`add`') with name ordered  
+as '`set_reference_lvalue`' to make clear it "sets reference flag to lval-ref".  
+There is both an '`add`' and a '`set`' trait taking a single `ref_qual` argument,  
+which the '`add`' trait implementing reference collapse behaviour:
+
+    function_remove_reference<F>     // no ambiguity with 'remove'
+
+    function_set_reference_lvalue<F> // not 'set_lvalue_reference'
+    function_set_reference_rvalue<F>
+
+    function_add_reference<F, ref_qual ref> // reference-collapse
+    function_set_reference<F, ref_qual ref> // no ref-collapse
+
+----
 
 ## Predicate traits
 
+'Top level' predicates, `is_function` and `is_free_function` evaluate true | false  
+for any C++ type
+(type trait inherits from `std::true_type` | `std::false_type`).
+
+The remaining function predicate traits treat non-function types differently:
+
+* `is_function_*<T>` return an empty type for non-function type `T`
+* `function_is_*<T>` cause a compile error on non-function type `T`  
+
+(`is_function_*` is the 'safe' or 'SFINAE-friendly' version of `function_is_*`)  
+(`is_function_*` has no `_v` suffix variant - use equivalent `function_is_*_v`).
+
 ### Top Level Predicates
 
-These two 'top level' predicate traits are for classifying C++ function types  
-among all C++ types, so can be safely evaluated for any type.
+A pair of 'top level' predicate traits classify C++ function types among all C++ types:
 
-`is_function`
+* `ltl::is_function<T>` equivalent to [`std::is_function`](https://en.cppreference.com/w/cpp/types/is_function)
+* `ltl::is_free_function<T>` true for `T` a non-cvref-qualified function type
 
-`ltl::is_function` is equivalent to [`std::is_function`](https://en.cppreference.com/w/cpp/types/is_function)
+```C++
+template <typename T> struct is_*function : bool_constant<P<T>> {};
+template <typename T>
+     inline constexpr bool is_*function_v = bool{P<T>>};
+```
 
-Saves redundant instantiation of `std::is_function`  
-(for instance, to 'guard' uses of function traits for non-function types)
+#### `is_function`
 
-</details>
+Use `ltl::is_function` in preference to `std::is_function` in a condition  
+guarding instantiation of a function trait (because it saves redundant work)  
+(for example, see implementation of `is_free_function_v` next).
 
-<details><summary><code>is_free_function</code></summary>
+#### `is_free_function`
 
-`is_free_function_v<F>` checks if type `F` is a free function type  
+Checks if the argument type is a free function type:
 >`true` if `F` is a function type without cvref qualifiers  
 `false` if `F` is not a function type or is a cvref qualified function type 
-</details>
 
+Example implementation of `is_free_function_v`
 
+```c++
+template <typename F>
+inline constexpr bool is_free_function_v = []{
+             if constexpr (is_function_v<F>)
+                 return !function_is_cvref_v<F>;
+             return false; }();
+```
 
-### Predicates for function type classification
+### Function predicate traits
 
-Simple predicate aliases to `std` `true_type` / `false_type`
+#### SFINAE-friendly predicates: `is_function_*`
 
-* `function_is_const`
-* `function_is_volatile`
-* `function_is_cv`
-* `function_is_reference`
-* `function_is_lvalue_reference`
-* `function_is_rvalue_reference`
-* `function_is_cvref`
-* `function_is_noexcept`
-* `function_is_variadic`
+```c++
+// predicate_base<P,T> // An empty struct for non-function type T, or
+// predicate_base<P,F> // bool_constant<P<F>> for function type F
+template <typename T> struct is_function_* : predicate_base<P,T> {};
+```
 
-'Lazy' predicates
+Note: no `_v` suffix variant - use equivalent `function_is_*_v`
 
 * `is_function_const`
 * `is_function_volatile`
@@ -297,32 +331,140 @@ Simple predicate aliases to `std` `true_type` / `false_type`
 * `is_function_noexcept`
 * `is_function_variadic`
 
+#### Simple predicates: `function_is_*`
 
-The predicate member traits are aliases of `bool_constant<?>`
-<br>(so they are equal to `true_type` or `false_type` depending on `?`).
-<br>The bool value itself can be extracted from the `bool_constant`
-<br>via its `value` member or by invoking its function call operator
+```c++
+template <Function F> using function_is_* = bool_constant<P<F>>;
+template <Function F>
+     inline constexpr bool function_is_*_v = bool{<P<F>>};
+```
 
-| function\<F\> member trait<hr>function_trait\<F\> standalone | <br>P0172R0 / callable_trait\<F\> standalone |
-|----|----|
-|`function<F>::is_*` == `bool_constant<?>`<br>`function<F>::is_*()`= `bool{?}`<hr>`function_is_*<F> : bool_constant<?>`<br>`function_is_*_v<F>` = `bool{?}`|<br><br>`is_*_member<F> : bool_constant<?>`<br>`is_*_member_v<F>` = `bool{?}`|
+>As type trait, alias to `std` `true_type` / `false_type`  
+As value trait `_v`, evaluate true | false
 
-## Type traits
+Compile fail for non-function type arguments.
+
+* `function_is_const`
+* `function_is_volatile`
+* `function_is_cv`
+* `function_is_reference`
+* `function_is_lvalue_reference`
+* `function_is_rvalue_reference`
+* `function_is_cvref`
+* `function_is_noexcept`
+* `function_is_variadic`
+
+----
+
+## Reference value traits
+
+Reflect reference qualification of a type by returning an enumerated value.
+
+* `function_reference_v<F>` for function type reference qualification
+* `reference_v<T>` for ordinary top-level reference qualification
+
+Evaluate to a value of enum type `ltl::ref_qual`
+
+```c++
+enum ref_qual { null_ref_v, rval_ref_v, lval_ref_v };
+
+template <typename T>
+     inline constexpr ref_qual reference_v = RefQual<T>;
+template <Function F>
+     inline constexpr ref_qual function_reference_v = FuncRefQual<F>;
+```
+
+The addition operator for `ref_qual` values is defined to do reference collapse:
+
+```c++
+constexpr ref_qual operator+( ref_qual a, ref_qual b);
+```
+
+----
+
+## Signature type traits
+
+These traits are 'getters' for function return type and  arg types:
+
+* `function_return_type<F>` returns the return type of F
+* `function_arg_types<F>` returns a type-list of parameter types of F
+
+```c++
+template <typename F> using function_return_type_t = /* Return type of F */
+template <typename F> struct function_return_type  {
+  using type = function_return_type_t<F>;
+};
+
+template <typename F, template <typename...> typename T = ltl::arg_types>
+                      using function_arg_types = T<P...>; // P... arg types
+```
+
+For example, to get the parameter types of a function type in a `std::tuple`:
+
+```c++
+  ltl::function_arg_types< int(char, bool[4]), std::tuple >;
+```
+
+>Returns `std::tuple< char, bool* >` (note the usual decay in array type)
+
+The function signature getter could be called `function_remove_cvref_noexcept`  
+(and so included in the next section on add and remove traits)
+
+* `function_signature<F>` returns just the `R(P...)` or `R(P...,...)`
+
+```c++
+template <typename F> using function_signature_t = /* function signature */
+template <typename F>
+using function_signature = function_traits<function_signature_t<F>>;
+```
+
+----
 
 ## Add remove traits
 
 * `function_add_*<F>`
 * `function_remove_*<F>`
 
-`const`, `volatile`, `noexcept`, `variadic`
+For`*` in `const`, `volatile`, `noexcept`, `variadic`
 
-These are modifying traits which take no arguments.  
-The 
+* `function_remove_*<F>` (remove only)
+
+For* in `reference`, `cvref`
+
+The above are all modifying traits that take no arguments.
+
+The trait to 'add' a reference qualifier takes an argument of type `ref_qual`  
+and 'adds' it to any existing reference qualifier, performing reference collapse:
+
+* `function_add_reference<F,ref_qual>` (ref-collapse)
+
+```c++
+template <Function F> using function_**_t = FuncTr<F>;
+template <Function F> using function_** = function_traits<FuncTr<F>>;
+
+template <typename F, ref_qual R>
+using function_add_reference =
+      function_set_reference<F, function_reference_v<F> + R>;
+
+template <typename F, ref_qual R>
+using function_add_reference_t =
+      function_set_reference_t<F, function_reference_v<F> + R>;
+```
+----
 
 ## Set traits
 
+----
+
+## Copy trait
+
+----
 
 ## function_traits and P0172 equivalent
+
+| function_trait\<F\>  | P0172R0 / callable_trait\<F\>  |
+|----|----|
+| `is_function_*<F>`|`is_*_member<F>`|
 
 <details><summary><b>Predicate</b> traits</summary>
 

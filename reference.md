@@ -15,22 +15,23 @@ A pair of 'top level' predicate traits classify C++ function types among all C++
 These two top level predicates evaluate as `std::true_type` or `std::false_type`.  
 The remaining function predicate traits treat non-function types differently:
 
-* `function_is_*<T>` cause a compile error on non-function type `T`
 * `is_function_*<T>` return an empty type for non-function type `T`
+* `function_is_*<T>` cause a compile error on non-function type `T`  
+(all `function_*<T>` traits give a compile error on non-function `T`).
 
 (`is_function_*` is the 'safe' or 'SFINAE-friendly' version of `function_is_*`).  
 
 
 ## Synopsis
 
-<details><summary>List of traits (50, or 90 including _t or _v variants)</summary>
+<details><summary>List of traits (total 50, or 86 including _t or _v variants)</summary>
 
 ```c++
 // Key
 // ===
   template <typename T> // Indicates trait is defined for all C++ types T
   template <Function F> // Indicates trait is defined for function types F
-// One day, Function will be a concept or constraint = is_function_v<F>
+                        // only (concept Function = is_function_v<F>)
 
   P            // For a predicate trait, P is the predicate; type -> bool
   P<T>, P<F>   // The predicate P evaluated on type T or function type F
@@ -38,8 +39,9 @@ The remaining function predicate traits treat non-function types differently:
   predicate_base<P,T> // An empty struct for non-function type T, or
   predicate_base<P,F> // bool_constant<P<F>> for function type F
 
-  FuncTr       // For a function trait, FuncTr modifies the function type
-  FuncTr<F>    // The modified function type result of the function trait
+  FuncTr      // For a function trait, FuncTr is the function type modifier
+  FuncTr<F>   // The modified function type result of the function trait
+              // (may take Args: FuncTr<F,Args...> : F -> F' function type)
 
   RefQual<T>     // 3-valued ref_qual; is T lval-ref, rval-ref or not a ref
   FuncRefQual<F> // 3-valued ref_qual; has func F lval, rval or no ref qual
@@ -105,9 +107,9 @@ template <function F> ref_qual function_reference_v = FuncRefQual<F>;
 // Function signature traits
 // =========================
 
-  function_return_type
-  function_arg_types
-  function_signature
+  function_return_type_t // alias to the return type R of function type Arg
+  function_return_type   // class containing public member type alias for R
+  function_arg_types     // a type-list of function type Arg's param types
 ```
 
 ```c++
@@ -115,6 +117,8 @@ template <function F> ref_qual function_reference_v = FuncRefQual<F>;
 // =========================
 template <Function F> using function_*_*_t = FuncTr<F>;
 template <Function F> using function_*_* = function_traits<FuncTr<F>>;
+
+  function_signature // could be function_remove_cvref_noexcept
 
   function_add_const             function_remove_const
   function_add_volatile          function_remove_volatile
@@ -125,6 +129,8 @@ template <Function F> using function_*_* = function_traits<FuncTr<F>>;
   function_set_reference_lvalue
   function_set_reference_rvalue
 
+                                 function_remove_cvref
+
   function_add_noexcept          function_remove_noexcept
   function_add_variadic          function_remove_variadic
 ```
@@ -132,11 +138,12 @@ template <Function F> using function_*_* = function_traits<FuncTr<F>>;
 ```c++
 // Function modifying traits taking arguments
 // =========================
-template <Function F, Args...> using function_*_*_t = FuncTr<F>;
-template <Function F, Args...> using function_*_* = function_traits<FuncTr<F>>;
+template <Function F, Args...> using function_*_*_t = FuncTr<F,Args...>;
+template <Function F, Args...> using function_*_* = function_traits<
+                                                      FuncTr<F,Args...>>;
 
-  function_add_reference  <F, ref_qual ref>  // 'add' does reference-collapse
-  function_set_reference  <F, ref_qual ref>
+  function_add_reference  <F, ref_qual ref>  // add does reference-collapse
+  function_set_reference  <F, ref_qual ref>  // set does not ref-collapse
 
   function_set_const     <F, bool C>
   function_set_volatile  <F, bool V>
@@ -147,28 +154,39 @@ template <Function F, Args...> using function_*_* = function_traits<FuncTr<F>>;
 
   function_set_cvref     <F, bool C, bool V, ref_qual ref>
 
-  function_set_return_type <F, R>
+  function_set_return_type <F, R>           // requires R=valid return type
   function_set_signature   <F, FuncSig>
-  function_set_cvref_as    <F, FuncSource>
+  function_set_cvref_as    <F, Function FuncSource>
 ```
 
 </details>
 
 ## Traits by group
 
-* [Predicate traits](#predicate-traits): `is_function_*<T>`, `function_is_*<F>`  
+Following `std` convention, there are `_t` or `_v` variants as appropriate
+
+* [Top level predicate traits]() classify C++ function types among all C++ types  
+`is_function<T>` equivalent to `std::is_function<T>`  
+`is_free_function<T>` true for `T` a non-cvref-qualified function type
+
+* [Function predicate traits](#predicate-traits): `is_function_*<T>`, `function_is_*<F>`  
 For`*` in `const`, `volatile`, `cv`, `cvref`, `noexcept`, `variadic`,  
 `reference`, `lvalue_reference`, `rvalue_reference`
 
-* [Reference value traits](#reference-value): `function_reference_v<F>`  
-(and `reference_v<T>` for ordinary top-level reference qualifier)  
-Evaluate to a value of enum type `ltl::ref_qual`
+* [Reference value traits](#reference-value): evaluate to a value of enum type `ltl::ref_qual`  
+`function_reference_v<F>` for function type reference qualification  
+`reference_v<T>` for ordinary top-level reference qualification  
 
-* [Type traits](#type-traits): (type property 'getters') `function_*<F>`  
-For`*` in `signature`, `return_type`, `arg_types`
+
+* [Signature type traits](#type-traits): 'getters' for function return type and  arg types  
+`function_return_type<F>` returns the return type of F  
+`function_arg_types<F>` returns a type-list of parameter types of F  
+`function_signature<F>` returns just the `R(P..)` or `R(P...,...)`  
+'signature' (so could be called `function_remove_cvref_noexcept`)
 
 * [Add / remove traits](#add-remove-traits): `function_add_*<F>`, `function_remove_*<F>`  
 (with no Args) For`*` in `const`, `volatile`, `noexcept`, `variadic`  
+(with no Args) `function_remove_cvref<F>` (no add; remove only)  
 (with no Args) `function_remove_reference<F>` (remove only)  
 (one ref Arg) `function_add_reference<F,ref_qual>` (ref-collapse)
 
@@ -228,50 +246,14 @@ Function 'property flags':
 as these conventional terms imply compounding or reference-collapsing.  
 
 
-Compound types and compounding
-
-Arbitrarily complex types are constructed from fundamental types by compounding;  
-adding pointers, array extents or top-level reference, or forming enums or classes  
-or function types:
-
->A C++ function type is a [compound type](https://en.cppreference.com/w/cpp/types/is_compound):  
-Its function 'signature' is a compound of its return type and argument types.  
-Any `cvref` qualifiers or `noexcept` are not compounded onto the signature -  
-they are part of the function type.
-
-Forming a function type is a compounding operation.  
-Changing the type itself is not a compounding operation.
-
-Clearly, changing its signature changes it to a different function type.  
-Similarly, changing cvref qualifiers changes the type itself to a differently-  
-qualified type, even though with the same signature. In other words,  
-the function qualifiers do not 'compound' or 'nest' onto a base signature.
-
-The `add` and `remove` variants of conventional `std` traits have 'compounding'  
-as a mental model; `add_pointer` and `add_extent` compound their base type.  
-On the other hand, adding `cv` or `ref` qualifiers does not always compound -  
-`cv` qualifiers attach to their base type, so a cv-qualified type is not a compound,  
-while a reference qualifier can only be
-
-and 'decompounding' modifiers. For instance, adding a  
-reference qualifier
-
-Following `std` convention, there are variants 
-
-
-A few words here to 
-
-
-
-
-
 ## Predicate traits
 
-### Predicates for checking properties of general type
+### Top Level Predicates
 
-These predicate traits can be evaluated for any type.
+These two 'top level' predicate traits are for classifying C++ function types  
+among all C++ types, so can be safely evaluated for any type.
 
-<details><summary><code>is_function</code></summary>
+`is_function`
 
 `ltl::is_function` is equivalent to [`std::is_function`](https://en.cppreference.com/w/cpp/types/is_function)
 

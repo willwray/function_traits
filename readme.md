@@ -356,7 +356,7 @@ These 48 specializations are also listed in [Boost.CallableTraits](https://www.b
 
 </details>
 
-## [Reference | Design Notes](reference.md)
+## [Reference](reference.md)
 
 ## **Examples**
 

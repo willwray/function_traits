@@ -46,7 +46,7 @@ Function **cvref** properties (`bool`, `bool`, `ref_qual`):
 * [**`const`**] [**`volatile`**] [**`&`**|**`&&`**] : Function **cvref** qualifiers; 12 combos
 
 >Warning: the **cvref** API terms may be familiar from the `std` traits but have  
-different meanings as function type qualifiers (see API refs):
+different meanings and behaviour as function type qualifiers (see API refs):
 >
 >* **const**, **volatile**, **cv** (const | volatile)  
 >* **lvalue_reference**, **rvalue_reference**, **reference** (lval | rval)  
@@ -54,7 +54,7 @@ different meanings as function type qualifiers (see API refs):
 
 The **cvref** qualifiers divide the function types into two top level categories:
 
-* '**free**' function types, with no cvref qualifiers - the valid types of free functions  
+* **free** function types, with no cvref qualifiers - the valid types of free functions  
 * **cvref** qualified function types, the so-called 'abominable' function types
 
 Test with function traits `is_free_function<T>` or `function_is_cvref<F>`
@@ -63,7 +63,7 @@ Test with function traits `is_free_function<T>` or `function_is_cvref<F>`
 
 ----
 
-<details><summary>Copyright &copy; 2018 Will Wray. Distributed under the Boost Software License, V1.0</summary>
+<details><summary>Copyright &copy; 2019 Will Wray. Distributed under the Boost Software License, V1.0</summary>
 
 ### **Boost Software License** - Version 1.0 - August 17th, 2003
 
@@ -329,7 +329,7 @@ These 48 specializations are also listed in [Boost.CallableTraits](https://www.b
     **Complete**: provide a way to do any query or modification that may be needed;  
     if you see something that is not reasonably easy to do then open an issue.
 
-    **Minimal**: avoid bloat and duplication in the interface (not easy; >50 traits!).  
+    **Minimal**: avoid bloat and duplication in the interface (not easy - 50 traits!).  
     Narrow scope, single responsibility - function traits only, no more, no less.
     </details>
 

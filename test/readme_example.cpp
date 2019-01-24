@@ -15,7 +15,7 @@ int logger(F C::* log_mf, Vargs... vargs) noexcept
                 == bool{sizeof...(vargs)} );
 
     using R = ltl::function_return_type_t<F>;
-    using Ps = ltl::function_args_t<F,std::tuple>;
+    using Ps = ltl::function_arg_types<F,std::tuple>;
     using P0 = std::tuple_element_t<0,Ps>;
 
     static_assert( std::is_same_v< R, int> );

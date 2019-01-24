@@ -108,7 +108,7 @@ SAME( typename F::type, void() );
 SAME( typename F::return_type_t, void );
 SAME( typename F::signature_t, void() );
 SAME( typename F::remove_cvref_t, void() );
-SAME( typename F::arg_types<>, ltl::function_parameter_types<> );
+SAME( typename F::arg_types<>, ltl::arg_types<> );
 
 SAME( typename F::set_const_t<true>, fc );
 SAME( typename F::set_volatile_t<true>, fv );
@@ -159,7 +159,7 @@ SAME( typename Fnx::type, fnx );
 SAME( typename Fnx::return_type_t, std::is_const<void const> );
 SAME( typename Fnx::signature_t, f );
 SAME( typename Fnx::remove_cvref_t, fnx);
-SAME( typename Fnx::arg_types<>, ltl::function_parameter_types<void const*> );
+SAME( typename Fnx::arg_types<>, ltl::arg_types<void const*> );
 }
 
 
@@ -187,7 +187,7 @@ using FVFB = void(char,bool());
 static_assert(
    std::is_void_v< ltl::function_return_type_t< FVFB > >
 && std::is_same_v< ltl::function_arg_types< FVFB >,
-                   ltl::function_parameter_types<char,bool(*)()> >
+                   ltl::arg_types<char,bool(*)()> >
 );
 
 int main()

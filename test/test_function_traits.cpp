@@ -135,6 +135,58 @@ SAME( typename F::set_noexcept<true>, ltl::function_traits<void() noexcept> );
 //SAME( typename F::set_cvref_noexcept_t<true,true,ltl::rval_ref_v,true>,
 //                                   void() const volatile && noexcept );
 //SAME( typename F::set_signature_t<int(bool)>, int(bool) );
+
+// Test function traits for simple func F=void()
+static_assert(! ltl::function_is_const<f>());
+static_assert(! ltl::function_is_volatile<f>());
+static_assert(! ltl::function_is_cv<f>());
+static_assert(! ltl::function_is_reference_lvalue<f>());
+static_assert(! ltl::function_is_reference_rvalue<f>());
+static_assert(! ltl::function_is_reference<f>());
+static_assert(! ltl::function_is_cvref<f>());
+static_assert(! ltl::function_is_noexcept<f>());
+static_assert(! ltl::function_is_variadic<f>());
+
+static_assert(! ltl::function_is_const_v<f>);
+static_assert(! ltl::function_is_volatile_v<f>);
+static_assert(! ltl::function_is_cv_v<f>);
+static_assert(! ltl::function_is_reference_lvalue_v<f>);
+static_assert(! ltl::function_is_reference_rvalue_v<f>);
+static_assert(! ltl::function_is_reference_v<f>);
+static_assert(! ltl::function_is_cvref_v<f>);
+static_assert(! ltl::function_is_noexcept_v<f>);
+static_assert(! ltl::function_is_variadic_v<f>);
+
+SAME( ltl::function_return_type_t<f>, void );
+SAME( ltl::function_signature_t<f>, void() );
+SAME( ltl::function_remove_cvref_t<f>, void() );
+SAME( ltl::function_arg_types<f>, ltl::arg_types<> );
+
+SAME( ltl::function_set_const_t<f,true>, fc );
+SAME( ltl::function_set_volatile_t<f,true>, fv );
+SAME( ltl::function_set_cv_t<f,true,true>, fcv );
+SAME( ltl::function_set_reference_t<f,ltl::lval_ref_v>, fl );
+SAME( ltl::function_set_reference_t<f,ltl::rval_ref_v>, fr );
+SAME( ltl::function_set_cvref_t<f,true,false,ltl::lval_ref_v>, fcl );
+SAME( ltl::function_set_cvref_t<f,true,false>, fc );
+SAME( ltl::function_set_noexcept_t<f,true>, void() noexcept );
+SAME( ltl::function_set_variadic_t<f,true>, void(...) );
+SAME( ltl::function_set_return_type_t<f,int>, int() );
+
+SAME( ltl::function_set_const<f,true>, Fc );
+SAME( ltl::function_set_volatile<f,true>, Fv );
+SAME( ltl::function_set_cv<f,true,true>, Fcv );
+SAME( ltl::function_set_reference<f,ltl::lval_ref_v>, Fl );
+SAME( ltl::function_set_reference<f,ltl::rval_ref_v>, Fr );
+SAME( ltl::function_set_cvref<f,true,false,ltl::lval_ref_v>, Fcl );
+SAME( ltl::function_set_cvref<f,true,false>, Fc );
+SAME( ltl::function_set_noexcept<f,true>, ltl::function_traits<void() noexcept> );
+//SAME( typename F::set_variadic<true>, ltl::function_traits<void(...)> );
+
+//SAME( typename F::set_noexcept<true>, void() noexcept );
+//SAME( typename F::set_cvref_noexcept_t<true,true,ltl::rval_ref_v,true>,
+//                                   void() const volatile && noexcept );
+//SAME( typename F::set_signature_t<int(bool)>, int(bool) );
 }
 
 namespace cmplx_func

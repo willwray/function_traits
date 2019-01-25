@@ -548,9 +548,9 @@ using function_remove_volatile_t = function_set_volatile_t<F, false>;
 
 // set_cv, remove_cv (add_cv would add c AND v while is_cv tests c OR v)
 template <typename F, bool C, bool V>
-using function_set_cv = typename function_traits<F>::template set_cv<V>;
+using function_set_cv = typename function_traits<F>::template set_cv<C,V>;
 template <typename F, bool C, bool V>
-using function_set_cv_t = typename function_traits<F>::template set_cv_t<V>;
+using function_set_cv_t = typename function_traits<F>::template set_cv_t<C,V>;
 
 template <typename F>
 using function_remove_cv = function_set_cv<F, false, false>;
@@ -591,10 +591,10 @@ using function_remove_reference_t = function_set_reference_t<F, null_ref_v>;
 // set_cvref, set_cvref_as, remove_cvref
 template <typename F, bool C, bool V, ref_qual R = null_ref_v>
 using function_set_cvref =
-    typename function_traits<F>::template set_cvref<V, R>;
+    typename function_traits<F>::template set_cvref<C, V, R>;
 template <typename F, bool C, bool V, ref_qual R = null_ref_v>
 using function_set_cvref_t =
-    typename function_traits<F>::template set_cvref_t<V, R>;
+    typename function_traits<F>::template set_cvref_t<C, V, R>;
 
 template <typename F, typename S>
 using function_set_cvref_as =

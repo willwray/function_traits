@@ -91,8 +91,8 @@ E.g. for the predicates:
 |`is_const_member`               |`function_is_const`           |
 |`is_volatile_member`            |`function_is_volatile`        |
 |`is_cv_member`                  |`function_is_cv`              |
-|`is_lvalue_reference_member`    |`function_is_lvalue_reference`|
-|`is_rvalue_reference_member`    |`function_is_rvalue_reference`|
+|`is_lvalue_reference_member`    |`function_is_reference_lvalue`|
+|`is_rvalue_reference_member`    |`function_is_reference_rvalue`|
 |`has_member_qualifiers`         |`function_is_cvref`           |
 |`is_noexcept` (Boost.CallableTraits)|`function_is_noexcept`    |
 
@@ -119,7 +119,7 @@ For use with non-function types, guard with `std::is_function`:
 * This reads "is the type T a function and, if so, is it noexcept?".  
 This combined trait is more appropriately called `is_function_noexcept`.
 
-### Setters
+### Setters vs add / remove
 
 From P0172:
 
@@ -136,13 +136,117 @@ More examples: the 'mutating' traits:
 |`add_member_const`              |`function_add_const`         |
 |`add_member_volatile`           |`function_add_volatile`      |
 |`add_member_cv`                 |`function_add_cv`            |
-|`add_member_lvalue_reference`   |`function_set_reference<1,0>`|
-|`add_member_rvalue_reference`   |`function_set_reference<0,1>`|
+|`add_member_lvalue_reference`   |`function_set_reference_lvalue`|
+|`add_member_rvalue_reference`   |`function_set_reference_rvalue`|
 |`remove_member_const`           |`function_remove_const`      |
 |`remove_member_volatile`        |`function_remove_volatile`   |
 |`remove_member_cv`              |`function_remove_cv`         |
-|`remove_member_lvalue_reference`|`function_set_reference<0,0>`|
-|`remove_member_rvalue_reference`|`function_set_reference<0,0>`|
+|`remove_member_lvalue_reference`|`function_remove_reference`  |
+|`remove_member_rvalue_reference`|`function_remove_reference`  |
 |`remove_all_member_qualifiers`  |`function_remove_cvref`      |
 
-Note how `set` is used, with Boolean arguments, to replace `add`/`remove`
+Note how '`set`' is used for function reference qualifier in place of `add`.
+
+
+Compound types and compounding
+
+Arbitrarily complex types are constructed from fundamental types by compounding;  
+adding pointers, array extents or top-level reference, or forming enums or classes  
+or function types:
+
+>A C++ function type is a [compound type](https://en.cppreference.com/w/cpp/types/is_compound):  
+Its function 'signature' is a compound of its return type and argument types.  
+Any `cvref` qualifiers or `noexcept` are not compounded onto the signature -  
+they are part of the function type.
+
+Forming a function type is a compounding operation.  
+Changing the type itself is not a compounding operation.
+
+Clearly, changing its signature changes it to a different function type.  
+Similarly, changing cvref qualifiers changes the type itself to a differently-  
+qualified type, even though with the same signature. In other words,  
+the function qualifiers do not 'compound' or 'nest' onto a base signature.
+
+The `add` and `remove` variants of conventional `std` traits have 'compounding'  
+as a mental model; `add_pointer` and `add_extent` compound their base type.  
+On the other hand, adding `cv` or `ref` qualifiers does not always compound -  
+`cv` qualifiers attach to their base type, so a cv-qualified type is not a compound,  
+while a reference qualifier can only be
+
+and 'decompounding' modifiers. For instance, adding a  
+reference qualifier
+
+
+## function_traits and P0172 equivalent
+
+| function_trait\<F\>  | P0172R0 / callable_trait\<F\>  |
+|----|----|
+| `is_function_*<F>`|`is_*_member<F>`|
+
+<details><summary><b>Predicate</b> traits</summary>
+
+Predicate traits test a true-or-false property of a type  
+returning a type derived from [`std::bool_constant`](https://en.cppreference.com/w/cpp/types/integral_constant)  
+i.e. inherited from `std::true_type` or `std::false_type`  
+
+The bool value itself can be extracted from the `bool_constant`  
+via its `value` member or by invoking its function call operator.  
+Alternatively, a `_v` suffix defines a templated boolean variable -  
+i.e. `is_*_v` directly gives `true` or `false` value for property `*`.  
+For example, these are all equivalent:
+
+    function_is_noexcept<F>::value
+    function_is_noexcept<F>()
+    function_is_noexcept_v<F>
+
+|function_trait\<F\>  | P0172R0 / callable_trait\<F\>  |
+|----|----|
+|`is_free_function<F>`|`not has_member_qualifiers<F>`|
+
+|function_trait\<F\>  | P0172R0 / callable_trait\<F\>  |
+|----|----|
+|`is_free_function<F>`|`not has_member_qualifiers<F>`|
+|`function_is_const<F>`|`is_const_member<F>`|
+|`function_is_volatile<F>`|`is_volatile_member<F>`|
+|`function_is_cv<F>` (Note: const *OR* volatile)| `is_cv_member<F>` (Note: const *AND* volatile)|
+|`function_is_reference_lvalue<F>`|`is_lvalue_reference_member<F>`|
+|`function_is_reference_rvalue<F>`|`is_rvalue_reference_member<F>`|
+|`function_is_reference<F>`|`is_reference_member<F>`|
+|`function_is_cvref<F>`|`has_member_qualifiers<F>`|
+|`function_is_noexcept<F>`|`is_noexcept<F>`|
+|`function_is_variadic<F>`|`has_varargs<F>`|
+
+</details>
+
+<details><summary><b>Modifying traits</b>: add | remove</summary>
+
+|function_trait\<F\>  | P0172R0 / callable_trait\<F\>  |
+|----|----|
+|`function_add_const<F>`<br>`function_set_const<F,true>`<br>`function_set_cv<F,true,false>`|`add_member_const<F>`|
+|`function_remove_const<F>`|`remove_member_const<F>`|
+|`function_add_volatile<F>`<br>`function_set_volatile<F,true>`<br>`function_set_cv<F,false,true>`|`add_member_volatile<F>`|
+|`function_remove_volatile<F>`|`remove_member_volatile<F>`|
+|`function_set_cv<F,true,true>`|`add_member_cv<F>`|
+|`function_remove_cv<F>`|`remove_member_cv<F>`|
+|`function_set_reference_lvalue<F>`<br>`function_set_reference_lvalue_`|`add_member_lvalue_reference<F>`|
+|`function_set_reference_rvalue<F>`<br>`function_set_reference_rvalue_`|`add_member_rvalue_reference<F>`|
+|`function_remove_reference<F>`|`remove_member_reference<F>`|
+|`function_remove_cvref<F>`| c.f. `function_type`|
+|`function_signature<F>`<br>`function_signature_noexcept<F>`<br>`function_remove_cvref<F>`|`function_type<F>`|
+|`function_set_cvref<F,bool,bool,ref>`<br>`function_set_cvref_as<F,G>`||
+|`function_add_noexcept<F>`<br>`function_set_noexcept<F,true>`|`add_noexcept<F>`|
+|`function_remove_noexcept<F>`<br>`function_set_noexcept<F,false>`|`remove_noexcept<F>`|
+|`function_add_variadic<F>`<br>`function_set_variadic<F,true>`|`add_varargs<F>`|
+|`function_remove_variadic<F>`|`remove_varargs<F>`|
+|`function_set_return_type<F,R>`|`apply_return<F,R>`|
+|`function_set_signature<F,S>`||
+|`function_arg_types<F,tuple_type>`|`args<F,tuple_type>`|
+|`function_return_type<F>`|`return_type<F>`|
+|`function_signature<F>`| c.f. `function_type`|
+||`qualified_class_of<F>`|
+||`remove_transaction_safe<F>`|
+||`add_transaction_safe<F>`|
+||`class_of<F>`|
+||`apply_member_pointer<F>`|
+
+</details>

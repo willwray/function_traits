@@ -2,7 +2,7 @@
 
 ## Type traits for properties of C++ function types
 
-Complete reflection of C++ function types  and modification of their properties. 
+Complete reflection of C++ function types  and modification of their properties.
 
 **Anatomy** of a general C++17 function type:
 
@@ -49,7 +49,7 @@ Function **cvref** properties (`bool`, `bool`, `ref_qual`):
 different meanings and behaviour as function type qualifiers (see API refs):
 >
 >* **const**, **volatile**, **cv** (const | volatile)  
->* **lvalue_reference**, **rvalue_reference**, **reference** (lval | rval)  
+>* **reference_lvalue**, **reference_rvalue**, **reference** (lval | rval)  
 >* **cvref** (const | volatile | reference)
 
 The **cvref** qualifiers divide the function types into two top level categories:
@@ -208,7 +208,7 @@ with full generality, one might as well write a full collection of traits.
 >
 >**'Setter' traits**
 >
->I wanted traits to copy qualifiers from source to target function types (e.g.   
+>I wanted traits to copy qualifiers from source to target function types (e.g.  
 Boost.CallableTraits has an open [issue](https://github.com/boostorg/callable_traits/issues/139) to add a `copy_member_cvref` trait  
 and `std::copy_*` traits are proposed in [P1016](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1016r0.pdf) "...type manipulation utilities")
 >

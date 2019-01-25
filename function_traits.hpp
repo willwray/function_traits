@@ -183,8 +183,8 @@ template <typename F>
 inline constexpr
 ref_qual
 function_reference_v = 
-  typename function_traits<F>::is_lvalue_reference() ? lval_ref_v
-: typename function_traits<F>::is_rvalue_reference() ? rval_ref_v : null_ref_v;
+  typename function_traits<F>::is_reference_lvalue() ? lval_ref_v
+: typename function_traits<F>::is_reference_rvalue() ? rval_ref_v : null_ref_v;
 
 
 namespace impl
@@ -198,8 +198,8 @@ struct function_cvref_nx
 {
   using is_const = std::bool_constant<c>;
   using is_volatile = std::bool_constant<v>;
-  using is_lvalue_reference = std::bool_constant<ref == lval_ref_v>;
-  using is_rvalue_reference = std::bool_constant<ref == rval_ref_v>;
+  using is_reference_lvalue = std::bool_constant<ref == lval_ref_v>;
+  using is_reference_rvalue = std::bool_constant<ref == rval_ref_v>;
   using is_noexcept = std::bool_constant<nx>;
 
   using is_cv = std::bool_constant<c || v>;  // Note: const OR volatile
@@ -426,11 +426,11 @@ template <typename F> using function_is_cv
 template <typename F> using function_is_reference
       = typename function_traits<F>::is_reference;
 
-template <typename F> using function_is_lvalue_reference
-      = typename function_traits<F>::is_lvalue_reference;
+template <typename F> using function_is_reference_lvalue
+      = typename function_traits<F>::is_reference_lvalue;
 
-template <typename F> using function_is_rvalue_reference
-      = typename function_traits<F>::is_rvalue_reference;
+template <typename F> using function_is_reference_rvalue
+      = typename function_traits<F>::is_reference_rvalue;
 
 template <typename F> using function_is_cvref
       = typename function_traits<F>::is_cvref;
@@ -455,11 +455,11 @@ template <typename F> inline constexpr bool function_is_cv_v =
 template <typename F> inline constexpr bool function_is_reference_v =
                                             function_is_reference<F>();
 
-template <typename F> inline constexpr bool function_is_lvalue_reference_v =
-                                            function_is_lvalue_reference<F>();
+template <typename F> inline constexpr bool function_is_reference_lvalue_v =
+                                            function_is_reference_lvalue<F>();
 
-template <typename F> inline constexpr bool function_is_rvalue_reference_v =
-                                            function_is_rvalue_reference<F>();
+template <typename F> inline constexpr bool function_is_reference_rvalue_v =
+                                            function_is_reference_rvalue<F>();
 
 template <typename F> inline constexpr bool function_is_cvref_v =
                                             function_is_cvref<F>();
@@ -485,11 +485,11 @@ template <typename F> struct is_function_cv :
 template <typename F> struct is_function_reference :
         impl::predicate_base<function_is_reference,F> {};
 
-template <typename F> struct is_function_lvalue_reference :
-        impl::predicate_base<function_is_lvalue_reference,F> {};
+template <typename F> struct is_function_reference_lvalue :
+        impl::predicate_base<function_is_reference_lvalue,F> {};
 
-template <typename F> struct is_function_rvalue_reference :
-        impl::predicate_base<function_is_rvalue_reference,F> {};
+template <typename F> struct is_function_reference_rvalue :
+        impl::predicate_base<function_is_reference_rvalue,F> {};
 
 template <typename F> struct is_function_cvref :
         impl::predicate_base<function_is_cvref,F> {};

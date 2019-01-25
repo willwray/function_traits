@@ -2,14 +2,12 @@
 
 ## `namespace ltl`
 
-`ltl` is the namespace for all traits and utilities in `function_traits`.  
+**`ltl`** is the namespace for all traits and utilities in **`function_traits`**.
+
 >Pronounce it as you like; LTL as in STL or 'litl' as 'little Italy' said fast.
 
-* Traits prefixed with `function_` are defined for C++ function types only  
-* Traits prefixed with `is_` are defined for any C++ type ('safe' predicates)  
-
-
-
+* Traits prefixed with **`function_`** are defined for C++ function types only
+* Traits prefixed with **`is_`** are defined for any C++ type ('safe' predicates)
 
 ## Synopsis
 
@@ -59,8 +57,8 @@ template <typename T> struct is_function_* : predicate_base<P,T> {};
   is_function_volatile
   is_function_cv
   is_function_reference
-  is_function_lvalue_reference
-  is_function_rvalue_reference
+  is_function_reference_lvalue
+  is_function_reference_rvalue
   is_function_cvref
   is_function_noexcept
   is_function_variadic
@@ -77,8 +75,8 @@ template <Function F>
   function_is_volatile
   function_is_cv
   function_is_reference
-  function_is_lvalue_reference
-  function_is_rvalue_reference
+  function_is_reference_lvalue
+  function_is_reference_rvalue
   function_is_cvref
   function_is_noexcept
   function_is_variadic
@@ -167,12 +165,11 @@ Following `std` convention, there are `_t` or `_v` variants as appropriate
 
 * [Function predicate traits](#function-predicate-traits): `is_function_*<T>`, `function_is_*<F>`  
 For`*` in `const`, `volatile`, `cv`, `cvref`, `noexcept`, `variadic`,  
-`reference`, `lvalue_reference`, `rvalue_reference`
+`reference`, `reference_lvalue`, `reference_rvalue`
 
 * [Reference value traits](#reference-value-traits): evaluate to a value of enum type `ltl::ref_qual`  
 `function_reference_v<F>` for function type reference qualification  
 `reference_v<T>` for ordinary top-level reference qualification  
-
 
 * [Signature type traits](#signature-type-traits): 'getters' for function return type and  arg types  
 `function_return_type<F>` returns the return type of F  
@@ -210,8 +207,7 @@ For`*` in `const`, `volatile`, `cv`, `cvref`, `noexcept`, `variadic`,
 |'**function**' type<br>(general function type)| don't care<br>(if it has qualifiers or not)| don't care |
 |'**free**' function type<br>('normal', 'ordinary', 'plain') | NO | don't care |
 |function '**signature**' type<br>(a free function subtype) | NO | NO ==<br>`noexcept(false)`|
-|'abominable' function type<br>(**cvref**-qualified function type)| YES | don't care 
-
+|'abominable' function type<br>(**cvref**-qualified function type)| YES | don't care |
 
 >'free' indicates that these subtypes are the valid types of free functions.  
 'signature', as used here, is chosen to exclude any exception spec.  
@@ -226,8 +222,9 @@ See the [Readme](readme.md) material and reference [P0172R0](http://www.open-std
 All the properties of a C++ function type are on one level - its signature,  
 cvref qualifiers and exception specification are all equally part of its type.
 
-For the purposes of this API a function type is broken down as:  
-1. Return type `R` and parameter types `P...`  
+For the purposes of this API a function type is broken down as:
+
+1. Return type `R` and parameter types `P...`
 2. 'Flags' for its c,v,ref and noexcept properties, and variadic-ness
 
 Function property 'flags':
@@ -235,10 +232,9 @@ Function property 'flags':
 * A pair of `bool` flags for `const`, `volatile`
 * A `ref_qual` flag for [`&`|`&&`]  
 (`ref_qual` is a 3-valued enum; `null_ref_v`, `lval_ref_v`, `rval_ref_v`)  
-* A `bool` flag for `noexcept(bool)` 
+* A `bool` flag for `noexcept(bool)`
 * A `bool` flag for `R(P...)` or `R(P...,...)`  
 (non-variadic or variadic function signature).
-
 
 Function properties are modified by '`add`', '`remove`' and '`set`' traits.  
 Generally, '`add`' and '`remove`' traits modify a fully named property, so take no  
@@ -300,7 +296,7 @@ guarding instantiation of a function trait (because it saves redundant work)
 
 Checks if the argument type is a free function type:
 >`true` if `F` is a function type without cvref qualifiers  
-`false` if `F` is not a function type or is a cvref qualified function type 
+`false` if `F` is not a function type or is a cvref qualified function type
 
 Example implementation of **`is_free_function_v`**
 
@@ -328,8 +324,8 @@ Note: no `_v` suffix variant - use equivalent `function_is_*_v`
 * **`is_function_volatile`**
 * **`is_function_cv`**
 * **`is_function_reference`**
-* **`is_function_lvalue_reference`**
-* **`is_function_rvalue_reference`**
+* **`is_function_reference_lvalue`**
+* **`is_function_reference_rvalue`**
 * **`is_function_cvref`**
 * **`is_function_noexcept`**
 * **`is_function_variadic`**
@@ -351,8 +347,8 @@ Compile fail for non-function type arguments.
 * **`function_is_volatile`**
 * **`function_is_cv`**
 * **`function_is_reference`**
-* **`function_is_lvalue_reference`**
-* **`function_is_rvalue_reference`**
+* **`function_is_reference_lvalue`**
+* **`function_is_reference_rvalue`**
 * **`function_is_cvref`**
 * **`function_is_noexcept`**
 * **`function_is_variadic`**
@@ -428,7 +424,6 @@ using function_signature = function_traits<function_signature_t<F>>;
 
 ## Add / remove traits
 
-
 * **`function_add/remove_const`**
 * **`function_add/remove_volatile`**
 * **`function_add/remove_noexcept`**
@@ -460,6 +455,7 @@ template <typename F, ref_qual R>
 using function_add_reference_t =
       function_set_reference_t<F, function_reference_v<F> + R>;
 ```
+
 ----
 
 ## Set traits
@@ -531,6 +527,7 @@ from a source to a target function type:
 ```c++
   function_set_signature<S, function_signature_t<F>>
 ```
+
 effectively copies `S`'s cvref qualifiers and exception spec to `F`'s signature  
 (note the reversed Args - it actually copies `F`'s signature to `S`)
 

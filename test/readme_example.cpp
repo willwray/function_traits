@@ -29,3 +29,7 @@ template int logger(decltype(&LogV::log), int);
 // Compile fail; variadic logger without any forwarded varargs
 //template int logger(decltype(&LogV::log));
 
+int main()
+{
+	return 0;
+}

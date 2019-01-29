@@ -247,44 +247,45 @@ class function_base<R(P...__VA_ARGS__)>                                \
   using is_variadic = std::bool_constant<bool(#__VA_ARGS__[0])>;       \
   template <template <typename...> typename T=arg_types>               \
   using arg_types = T<P...>;                                           \
+  template <typename T> struct id { using type = T; };\
   template <bool c, bool v, ref_qual r, bool nx>\
   static constexpr auto set_cvref_noexcept()\
   {\
     if constexpr (r == null_ref_v) {\
       if constexpr(!v) {\
-        if constexpr(!c) return function_traits\
-                   <R(P...__VA_ARGS__) noexcept(nx)>{};\
-        else return function_traits\
-                   <R(P...__VA_ARGS__) const noexcept(nx)>{};\
+        if constexpr(!c)\
+          return id<R(P...__VA_ARGS__) noexcept(nx)>{};\
+        else\
+          return id<R(P...__VA_ARGS__) const noexcept(nx)>{};\
       } else {\
-        if constexpr(!c) return function_traits\
-                   <R(P...__VA_ARGS__) volatile noexcept(nx)>{};\
-        else return function_traits\
-                   <R(P...__VA_ARGS__) const volatile noexcept(nx)>{};\
+        if constexpr(!c)\
+          return id<R(P...__VA_ARGS__) volatile noexcept(nx)>{};\
+        else\
+          return id<R(P...__VA_ARGS__) const volatile noexcept(nx)>{};\
       }\
     } else if constexpr (r == lval_ref_v) {\
       if constexpr(!v) {\
-        if constexpr(!c) return function_traits\
-                   <R(P...__VA_ARGS__) & noexcept(nx)>{};\
-        else return function_traits\
-                   <R(P...__VA_ARGS__) const & noexcept(nx)>{};\
+        if constexpr(!c)\
+          return id<R(P...__VA_ARGS__) & noexcept(nx)>{};\
+        else\
+          return id<R(P...__VA_ARGS__) const & noexcept(nx)>{};\
       } else {\
-        if constexpr(!c) return function_traits\
-                   <R(P...__VA_ARGS__) volatile & noexcept(nx)>{};\
-        else return function_traits\
-                   <R(P...__VA_ARGS__) const volatile & noexcept(nx)>{};\
+        if constexpr(!c)\
+          return id<R(P...__VA_ARGS__) volatile & noexcept(nx)>{};\
+        else\
+          return id<R(P...__VA_ARGS__) const volatile & noexcept(nx)>{};\
       }\
     } else {\
       if constexpr(!v) {\
-        if constexpr(!c) return function_traits\
-                   <R(P...__VA_ARGS__) && noexcept(nx)>{};\
-        else return function_traits\
-                   <R(P...__VA_ARGS__) const && noexcept(nx)>{};\
+        if constexpr(!c)\
+          return id<R(P...__VA_ARGS__) && noexcept(nx)>{};\
+        else\
+          return id<R(P...__VA_ARGS__) const && noexcept(nx)>{};\
       } else {\
-        if constexpr(!c) return function_traits\
-                   <R(P...__VA_ARGS__) volatile && noexcept(nx)>{};\
-        else return function_traits\
-                   <R(P...__VA_ARGS__) const volatile && noexcept(nx)>{};\
+        if constexpr(!c)\
+          return id<R(P...__VA_ARGS__) volatile && noexcept(nx)>{};\
+        else\
+          return id<R(P...__VA_ARGS__) const volatile && noexcept(nx)>{};\
       }\
     }\
   }\

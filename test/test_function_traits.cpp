@@ -132,9 +132,9 @@ SAME( typename F::set_noexcept<true>, ltl::function_traits<void() noexcept> );
 //SAME( typename F::set_variadic<true>, ltl::function_traits<void(...)> );
 
 //SAME( typename F::set_noexcept<true>, void() noexcept );
-//SAME( typename F::set_cvref_noexcept_t<true,true,ltl::rval_ref_v,true>,
-//                                   void() const volatile && noexcept );
-//SAME( typename F::set_signature_t<int(bool)>, int(bool) );
+SAME( typename F::set_cvref_noexcept_t<true,true,ltl::rval_ref_v,true>,
+                                   void() const volatile && noexcept );
+SAME( typename F::set_signature_t<int(bool)>, int(bool) );
 
 // Test function traits for simple func F=void()
 static_assert(! ltl::function_is_const<f>());
@@ -207,10 +207,10 @@ static_assert(! typename Fnx::is_reference());
 static_assert(! typename Fnx::is_cvref());
 static_assert(  typename Fnx::is_noexcept());
 static_assert(  typename Fnx::is_variadic());
-//SAME( typename Fnx::type, fnx );
+SAME( typename Fnx::type, fnx );
 SAME( typename Fnx::return_type_t, std::is_const<void const> );
 SAME( typename Fnx::signature_t, f );
-//SAME( typename Fnx::remove_cvref_t, fnx);
+SAME( typename Fnx::remove_cvref_t, fnx);
 SAME( typename Fnx::arg_types<>, ltl::arg_types<void const*> );
 }
 

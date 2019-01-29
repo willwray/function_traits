@@ -311,19 +311,19 @@ class function_traits<R(P...__VA_ARGS__) CV REF noexcept(NOEXCEPT_ND(NX,X))> \
           std::is_const_v<int CV>, std::is_volatile_v<int CV>,               \
           reference_v<int REF>, NOEXCEPT_ND(NX,X)>                           \
 {                                                                            \
-  enum : bool { nx = NOEXCEPT_ND(NX,X) };                                    \
   template <typename> struct set_signature;                                  \
   template <typename r, typename... p> struct set_signature<r(p...)> {       \
-    using type = r(p...) CV REF noexcept(nx); };                             \
+    using type = r(p...) CV REF noexcept(NOEXCEPT_ND(NX,X)); };              \
   template <typename r, typename... p> struct set_signature<r(p..., ...)> {  \
-    using type = r(p..., ...) CV REF noexcept(nx); };                        \
+    using type = r(p..., ...) CV REF noexcept(NOEXCEPT_ND(NX,X)); };         \
 public:                                                                      \
-  using type = R(P...__VA_ARGS__) CV REF noexcept(nx);                       \
-  using remove_cvref_t = R(P...__VA_ARGS__) noexcept(nx);                    \
+  using type = R(P...__VA_ARGS__) CV REF noexcept(NOEXCEPT_ND(NX,X));        \
+  using remove_cvref_t = R(P...__VA_ARGS__) noexcept(NOEXCEPT_ND(NX,X));     \
   template <typename r> using set_return_type_t =                            \
-      r(P...__VA_ARGS__) CV REF noexcept(nx);                                \
+      r(P...__VA_ARGS__) CV REF noexcept(NOEXCEPT_ND(NX,X));                 \
   template <bool V> using set_variadic_t = std::conditional_t<V,             \
-      R(P..., ...) CV REF noexcept(nx), R(P...) CV REF noexcept(nx)>;        \
+      R(P..., ...) CV REF noexcept(NOEXCEPT_ND(NX,X)),                       \
+      R(P...) CV REF noexcept(NOEXCEPT_ND(NX, X))>;                          \
   template <typename B>                                                      \
   using set_signature_t = typename set_signature<B>::type;                   \
 };

@@ -5,7 +5,7 @@ struct Log0 { int log(char const* fmt) const noexcept; };
 struct LogV { int log(char const* fmt,...) const & noexcept; };
 
 template <class C, typename F, typename... Vargs>
-int logger(F C::* log_mf, Vargs... vargs) noexcept
+int logger(F C::* log_mf, Vargs... vargs)
 {
     static_assert( std::is_function_v<F> );
 
@@ -25,9 +25,7 @@ int logger(F C::* log_mf, Vargs... vargs) noexcept
 }
 
 template int logger(decltype(&Log0::log));
-template int logger(decltype(&LogV::log),int);
+template int logger(decltype(&LogV::log), int);
+// Compile fail; variadic logger without any forwarded varargs
+//template int logger(decltype(&LogV::log));
 
-int main()
-{
-    return 0;
-}

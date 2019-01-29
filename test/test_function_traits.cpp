@@ -207,10 +207,10 @@ static_assert(! typename Fnx::is_reference());
 static_assert(! typename Fnx::is_cvref());
 static_assert(  typename Fnx::is_noexcept());
 static_assert(  typename Fnx::is_variadic());
-SAME( typename Fnx::type, fnx );
+//SAME( typename Fnx::type, fnx );
 SAME( typename Fnx::return_type_t, std::is_const<void const> );
 SAME( typename Fnx::signature_t, f );
-SAME( typename Fnx::remove_cvref_t, fnx);
+//SAME( typename Fnx::remove_cvref_t, fnx);
 SAME( typename Fnx::arg_types<>, ltl::arg_types<void const*> );
 }
 

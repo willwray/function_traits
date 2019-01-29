@@ -399,7 +399,7 @@ template <template <typename> typename P, typename F>
 constexpr auto pred_base()
 {
   if constexpr (is_function_v<F>) {
-    return (P<F>){};
+    return P<F>{};
   } else {
     return empty_base{};
   }
@@ -500,17 +500,26 @@ template <typename F> struct is_function_noexcept :
 template <typename F> struct is_function_variadic :
         impl::predicate_base<function_is_variadic,F> {};
 
-// is_free_function_v<F> : checks if type F is a free function type
-//   true if F is a function type without cvref qualifiers
-//   false if F is not a function type or is a cvref qualified function type
-template <typename F>
-inline constexpr bool is_free_function_v = []{
-             if constexpr (is_function_v<F>)
-               return !function_is_cvref_v<F>;
-             return false; }();
+namespace impl
+{
+template <typename T>
+constexpr bool is_free_function()
+{
+	if constexpr (is_function_v<T>)
+		return !function_is_cvref_v<T>;
+	return false;
+}
+} // namespace impl
 
-template <typename F> struct is_free_function
-        : std::bool_constant<is_free_function_v<F>> {};
+
+// is_free_function_v<T> : checks if type T is a free function type
+//   true if T is a function type without cvref qualifiers
+//   false if T is not a function type or is a cvref qualified function type
+template <typename T>
+inline constexpr bool is_free_function_v = impl::is_free_function<T>();
+
+template <typename T> struct is_free_function
+        : std::bool_constant<is_free_function_v<T>> {};
 
 // set_const, add_const / remove_const
 template <typename F, bool C>

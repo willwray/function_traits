@@ -247,52 +247,50 @@ class function_base<R(P...__VA_ARGS__)>                                \
   using is_variadic = std::bool_constant<bool(#__VA_ARGS__[0])>;       \
   template <template <typename...> typename T=arg_types>               \
   using arg_types = T<P...>;                                           \
- private:\
-  template <typename T> struct id { using type = T; };\
   template <bool c, bool v, ref_qual r, bool nx>\
-  static constexpr auto setcvrnx()\
+  static constexpr auto set_cvref_noexcept()\
   {\
     if constexpr (r == null_ref_v) {\
       if constexpr(!v) {\
-        if constexpr(!c)\
-          return id<R(P...__VA_ARGS__) noexcept(nx)>{};\
-        else\
-          return id<R(P...__VA_ARGS__) const noexcept(nx)>{};\
+        if constexpr(!c) return function_traits\
+                   <R(P...__VA_ARGS__) noexcept(nx)>{};\
+        else return function_traits\
+                   <R(P...__VA_ARGS__) const noexcept(nx)>{};\
       } else {\
-        if constexpr(!c)\
-          return id<R(P...__VA_ARGS__) volatile noexcept(nx)>{};\
-        else\
-          return id<R(P...__VA_ARGS__) const volatile noexcept(nx)>{};\
+        if constexpr(!c) return function_traits\
+                   <R(P...__VA_ARGS__) volatile noexcept(nx)>{};\
+        else return function_traits\
+                   <R(P...__VA_ARGS__) const volatile noexcept(nx)>{};\
       }\
     } else if constexpr (r == lval_ref_v) {\
       if constexpr(!v) {\
-        if constexpr(!c)\
-          return id<R(P...__VA_ARGS__) & noexcept(nx)>{};\
-        else\
-          return id<R(P...__VA_ARGS__) const & noexcept(nx)>{};\
+        if constexpr(!c) return function_traits\
+                   <R(P...__VA_ARGS__) & noexcept(nx)>{};\
+        else return function_traits\
+                   <R(P...__VA_ARGS__) const & noexcept(nx)>{};\
       } else {\
-        if constexpr(!c)\
-          return id<R(P...__VA_ARGS__) volatile & noexcept(nx)>{};\
-        else\
-          return id<R(P...__VA_ARGS__) const volatile & noexcept(nx)>{};\
+        if constexpr(!c) return function_traits\
+                   <R(P...__VA_ARGS__) volatile & noexcept(nx)>{};\
+        else return function_traits\
+                   <R(P...__VA_ARGS__) const volatile & noexcept(nx)>{};\
       }\
     } else {\
       if constexpr(!v) {\
-        if constexpr(!c)\
-          return id<R(P...__VA_ARGS__) && noexcept(nx)>{};\
-        else\
-          return id<R(P...__VA_ARGS__) const && noexcept(nx)>{};\
+        if constexpr(!c) return function_traits\
+                   <R(P...__VA_ARGS__) && noexcept(nx)>{};\
+        else return function_traits\
+                   <R(P...__VA_ARGS__) const && noexcept(nx)>{};\
       } else {\
-        if constexpr(!c)\
-          return id<R(P...__VA_ARGS__) volatile && noexcept(nx)>{};\
-        else\
-          return id<R(P...__VA_ARGS__) const volatile && noexcept(nx)>{};\
+        if constexpr(!c) return function_traits\
+                   <R(P...__VA_ARGS__) volatile && noexcept(nx)>{};\
+        else return function_traits\
+                   <R(P...__VA_ARGS__) const volatile && noexcept(nx)>{};\
       }\
     }\
   }\
- public:                                                                     \
   template <bool c, bool v, ref_qual r, bool nx>                             \
-  using set_cvref_noexcept_t = typename decltype(setcvrnx<c,v,r,nx>())::type;\
+  using set_cvref_noexcept_t = typename decltype(\
+        set_cvref_noexcept<c,v,r,nx>())::type;\
 }
 FUNCTION_BASE(,);
 FUNCTION_BASE(,,...); // leading comma forwarded via macro varargs

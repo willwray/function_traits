@@ -5,16 +5,15 @@ branches:
   only:
   - master
 
-os: Visual Studio 2017
+platform: x64
 
 environment:
   matrix:
-    - arch: x86
-      compiler: msvc2017
-    - arch: x64
-      compiler: msvc2017
-
-platform: x64
+    # Visual Studio 2017
+    - GENERATOR: Visual Studio 15 2017 Win64
+      STDFLAGS: /std:c++latest
+      SCRIPT: support/vs.py
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
 install:
   - git submodule -q update --init

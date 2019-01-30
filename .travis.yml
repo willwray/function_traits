@@ -1,7 +1,6 @@
+dist: xenial
 language: python
 sudo: required
-dist: xenial
-#python: 3.7
 
 addons:
   apt:
@@ -32,7 +31,7 @@ matrix:
       addons:
         apt:
           sources:
-           - sourceline: 'ppa:ubuntu-toolchain-r/test'
+            - sourceline: 'ppa:ubuntu-toolchain-r/test'
           packages: ['g++-7']
 
     ##############
@@ -46,8 +45,8 @@ matrix:
         - CXX_STANDARD=17
       addons:
         apt:
-          sources: ['llvm-toolchain-xenial', 'llvm-toolchain-xenial-7']
-            -sourceline: 'ppa:ubuntu-toolchain-r/test'
+          sources: ['llvm-toolchain-trusty', 'llvm-toolchain-trusty-7']
+            - sourceline: 'ppa:ubuntu-toolchain-r/test'
           packages: ['clang-7', 'libc++-7-dev', 'libc++abi-7-dev']
 
     ##############

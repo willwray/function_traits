@@ -43,4 +43,4 @@ build_script:
   - cmd: ninja -C build
 
 test_script:
-  - cmd: ninja -C builddir test
+  - cmd: ninja -C build test

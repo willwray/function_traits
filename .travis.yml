@@ -19,17 +19,6 @@ matrix:
           sources:
             - sourceline: 'ppa:ubuntu-toolchain-r/test'
           packages: ['g++-8', 'ninja-build']
-    - os: linux
-      compiler: gcc
-      env: GCC_VERSION=7
-        - CC=gcc-7
-        - CXX=g++-7
-        - CXX_STANDARD=17
-      addons:
-        apt:
-          sources:
-            - sourceline: 'ppa:ubuntu-toolchain-r/test'
-          packages: ['g++-7', 'ninja-build']
 
     ##############
     # CLANG

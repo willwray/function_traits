@@ -3,12 +3,6 @@ language: python
 python: 3.6
 sudo: required
 
-addons:
-  apt:
-    packages:
-      - ninja
-      - ninja-build
-
 matrix:
     include:
     ##############
@@ -24,7 +18,7 @@ matrix:
         apt:
           sources:
             - sourceline: 'ppa:ubuntu-toolchain-r/test'
-          packages: ['g++-8']
+          packages: ['g++-8', 'ninja-build']
     - os: linux
       compiler: gcc
       env: GCC_VERSION=7
@@ -35,7 +29,7 @@ matrix:
         apt:
           sources:
             - sourceline: 'ppa:ubuntu-toolchain-r/test'
-          packages: ['g++-7']
+          packages: ['g++-7', 'ninja-build']
 
     ##############
     # CLANG
@@ -52,7 +46,7 @@ matrix:
             - llvm-toolchain-xenial
             - llvm-toolchain-trusty-7
             - sourceline: 'ppa:ubuntu-toolchain-r/test'
-          packages: ['clang-7', 'libc++-7-dev', 'libc++abi-7-dev']
+          packages: ['clang-7', 'libc++-7-dev', 'libc++abi-7-dev', 'ninja-build']
 
     ##############
     # OSX / APPLECLANG (Python download failing)

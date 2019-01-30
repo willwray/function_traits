@@ -1,9 +1,18 @@
+os: Visual Studio 2017
+
 build:
   verbosity: detailed
 
 branches:
   only:
   - master
+
+  environment:
+  matrix:
+    - arch: x86
+      compiler: msvc2017
+    - arch: x64
+      compiler: msvc2017
 
 platform: x64
 
@@ -34,8 +43,7 @@ install:
 
 before_build:
   # Enable the Visual C++ toolset for command-line builds.
-  - IF "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" (
-      call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
+  - cmd: if %compiler%==msvc2017 ( call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" %arch% )
 
 build_script:
   - cmd: echo Building on %arch% with %compiler%

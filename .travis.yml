@@ -21,7 +21,7 @@ matrix:
       addons:
         apt:
           sources:
-					  - sourceline: 'ppa:ubuntu-toolchain-r/test'
+            - sourceline: 'ppa:ubuntu-toolchain-r/test'
           packages: ['g++-8']
     - os: linux
       compiler: gcc
@@ -32,7 +32,7 @@ matrix:
       addons:
         apt:
           sources:
-					  - sourceline: 'ppa:ubuntu-toolchain-r/test'
+           - sourceline: 'ppa:ubuntu-toolchain-r/test'
           packages: ['g++-7']
 
     ##############
@@ -46,8 +46,8 @@ matrix:
         - CXX_STANDARD=17
       addons:
         apt:
-          sources:
-					  -sourceline: ['llvm-toolchain-xenial', 'llvm-toolchain-xenial-7', 'ppa:ubuntu-toolchain-r/test']
+          sources: ['llvm-toolchain-xenial', 'llvm-toolchain-xenial-7']
+            -sourceline: 'ppa:ubuntu-toolchain-r/test'
           packages: ['clang-7', 'libc++-7-dev', 'libc++abi-7-dev']
 
     ##############

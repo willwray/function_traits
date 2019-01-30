@@ -1,15 +1,11 @@
-# We don't care about the language here, except that setting
-# language: cpp will override our CC and CXX env variables below
-# and we do not want that !
-language: Ruby
-
 dist: xenial
+language: python
+python: 3.7
 sudo: required
 
 addons:
   apt:
     packages:
-      - python3-pip
       - meson
 
 matrix:
@@ -20,22 +16,20 @@ matrix:
     - os: linux
       compiler: gcc
       env: GCC_VERSION=8
-        - CC=gcc-8
         - CXX=g++-8
         - CXX_STANDARD=17
       addons:
         apt:
-          sources: ['ubuntu-toolchain-r-test']
+          sources: ['ppa:ubuntu-toolchain-r/test']
           packages: ['g++-8']
     - os: linux
       compiler: gcc
       env: GCC_VERSION=7
-        - CC=gcc-7
         - CXX=g++-7
         - CXX_STANDARD=17
       addons:
         apt:
-          sources: ['ubuntu-toolchain-r-test']
+          sources: ['ppa:ubuntu-toolchain-r/test']
           packages: ['g++-7']
 
     ##############
@@ -49,14 +43,14 @@ matrix:
         - CXX_STANDARD=17
       addons:
         apt:
-          sources: ['llvm-toolchain-xenial', 'llvm-toolchain-xenial-7', 'ubuntu-toolchain-r-test']
-          packages: ['clang-7', 'libc++-7-dev', 'libc++abi-7-dev']
+          sources: ['llvm-toolchain-xenial', 'llvm-toolchain-xenial-7', 'ppa:ubuntu-toolchain-r/test']
+          packages: ['lld-7', 'clang-7', 'libc++-7-dev', 'libc++abi-7-dev']
 
     ##############
     # OSX / APPLECLANG
     ##############
     - os: osx
-      osx_image: xcode10
+      osx_image: xcode10.1
       env:
         - CXX=clang
         - OSX=1

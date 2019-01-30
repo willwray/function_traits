@@ -1,12 +1,11 @@
-dist: xenial
 language: python
+
+dist: xenial
 
 install:
 	- mkdir -p build
 
 script:
-	- which $CXX
-	- $CXX --version
 	- mkdir build
 	- cd build
 	- ninja

@@ -42,7 +42,9 @@ matrix:
         - CXX_STANDARD=17
       addons:
         apt:
-          sources: ['llvm-toolchain-trusty', 'llvm-toolchain-trusty-7']
+          sources:
+            - llvm-toolchain-xenial
+            - llvm-toolchain-trusty-7
             - sourceline: 'ppa:ubuntu-toolchain-r/test'
           packages: ['clang-7', 'libc++-7-dev', 'libc++abi-7-dev']
 

@@ -1,7 +1,7 @@
 dist: xenial
 language: python
 python: 3.7
-sudo: required
+#sudo: required
 
 addons:
   apt:
@@ -13,24 +13,24 @@ matrix:
     ##############
     # GCC
     ##############
-    - os: linux
-      compiler: gcc
-      env: GCC_VERSION=8
-        - CXX=g++-8
-        - CXX_STANDARD=17
-      addons:
-        apt:
-          sources: ['ppa:ubuntu-toolchain-r/test']
-          packages: ['g++-8']
-    - os: linux
-      compiler: gcc
-      env: GCC_VERSION=7
-        - CXX=g++-7
-        - CXX_STANDARD=17
-      addons:
-        apt:
-          sources: ['ppa:ubuntu-toolchain-r/test']
-          packages: ['g++-7']
+#    - os: linux
+#      compiler: gcc
+#      env: GCC_VERSION=8
+#        - CXX=g++-8
+#        - CXX_STANDARD=17
+#      addons:
+#        apt:
+#          sources: ['ppa:ubuntu-toolchain-r/test']
+#          packages: ['g++-8']
+#    - os: linux
+#      compiler: gcc
+#      env: GCC_VERSION=7
+#        - CXX=g++-7
+#        - CXX_STANDARD=17
+#      addons:
+#        apt:
+#          sources: ['ppa:ubuntu-toolchain-r/test']
+#          packages: ['g++-7']
 
     ##############
     # CLANG
@@ -49,12 +49,12 @@ matrix:
     ##############
     # OSX / APPLECLANG
     ##############
-    - os: osx
-      osx_image: xcode10.1
-      env:
-        - CXX=clang
-        - OSX=1
-        - CXX_STANDARD=17
+#    - os: osx
+#      osx_image: xcode10.1
+#      env:
+#        - CXX=clang
+#        - OSX=1
+#        - CXX_STANDARD=17
 
 before_install:
   - echo "Before install"

@@ -69,7 +69,7 @@ before_install:
 install:
 	- mkdir -p build
 
-	script:
+script:
 	- which $CXX
 	- $CXX --version
 	- mkdir build

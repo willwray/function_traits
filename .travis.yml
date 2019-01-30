@@ -1,12 +1,11 @@
-dist: xenial
 language: python
-python: 3.7
 sudo: required
+dist: xenial
+#python: 3.7
 
 addons:
   apt:
     packages:
-      - meson
 
 matrix:
     include:
@@ -21,7 +20,8 @@ matrix:
         - CXX_STANDARD=17
       addons:
         apt:
-          sources: ['ppa:ubuntu-toolchain-r/test']
+          sources:
+					  - sourceline: 'ppa:ubuntu-toolchain-r/test'
           packages: ['g++-8']
     - os: linux
       compiler: gcc
@@ -31,7 +31,8 @@ matrix:
         - CXX_STANDARD=17
       addons:
         apt:
-          sources: ['ppa:ubuntu-toolchain-r/test']
+          sources:
+					  - sourceline: 'ppa:ubuntu-toolchain-r/test'
           packages: ['g++-7']
 
     ##############
@@ -45,7 +46,8 @@ matrix:
         - CXX_STANDARD=17
       addons:
         apt:
-          sources: ['llvm-toolchain-trusty', 'llvm-toolchain-trusty-7', 'ppa:ubuntu-toolchain-r/test']
+          sources:
+					  -sourceline: ['llvm-toolchain-xenial', 'llvm-toolchain-xenial-7', 'ppa:ubuntu-toolchain-r/test']
           packages: ['clang-7', 'libc++-7-dev', 'libc++abi-7-dev']
 
     ##############
@@ -69,6 +71,7 @@ before_install:
     fi
 
 install:
+  - pip3 install --user meson
   - mkdir -p build
 
 script:

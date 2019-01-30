@@ -49,14 +49,14 @@ matrix:
           packages: ['clang-7', 'libc++-7-dev', 'libc++abi-7-dev']
 
     ##############
-    # OSX / APPLECLANG
+    # OSX / APPLECLANG (Python download failing)
     ##############
-    - os: osx
-      osx_image: xcode10.1
-      env:
-        - CXX=clang
-        - OSX=1
-        - CXX_STANDARD=17
+    #- os: osx
+    #  osx_image: xcode10.1
+    #  env:
+    #    - CXX=clang
+    #    - OSX=1
+    #    - CXX_STANDARD=17
 
 before_install:
   - echo "Before install"
@@ -70,7 +70,7 @@ before_install:
 
 install:
   - mkdir -p build
-  - pip install --user meson
+  - pip install meson
 
 script:
   - which $CXX

@@ -1,0 +1,46 @@
+build:
+  verbosity: detailed
+
+branches:
+  only:
+  - master
+
+platform: x64
+
+environment:
+  matrix:
+    # Visual Studio 2017
+    - GENERATOR: Visual Studio 15 2017 Win64
+      STDFLAGS: /std:c++latest
+      TESTS: test/test_function_traits
+      SCRIPT: support/vs.py
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+
+install:
+  - git submodule -q update --init
+  # Install Ninja
+  - cmd: mkdir C:\ninja-build
+  - ps: (new-object net.webclient).DownloadFile('https://github.com/mesonbuild/cidata/raw/master/ninja.exe', 'C:\ninja-build\ninja.exe')
+  # Set paths to dependencies (based on architecture)
+  - cmd: set PYTHON_ROOT=C:\python37-x64
+  # Print out dependency paths
+  - cmd: echo Using Python at %PYTHON_ROOT%
+  # Add neccessary paths to PATH variable
+  - cmd: set PATH=%cd%;C:\ninja-build;%PYTHON_ROOT%;%PYTHON_ROOT%\Scripts;%PATH%
+  # Install meson
+  - cmd: pip install meson
+  - cmd: meson --version
+  - cmd: ninja --version
+
+before_build:
+  # Enable the Visual C++ toolset for command-line builds.
+  - IF "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" (
+      call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
+
+build_script:
+  - cmd: echo Building on %arch% with %compiler%
+  - cmd: meson --backend=ninja build
+  - cmd: ninja -C build
+
+test_script:
+  - cmd: ninja -C builddir test

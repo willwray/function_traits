@@ -129,9 +129,6 @@ SAME( typename F::set_reference<ltl::rval_ref_v>, Fr );
 SAME( typename F::set_cvref<true,false,ltl::lval_ref_v>, Fcl );
 SAME( typename F::set_cvref<true,false>, Fc );
 SAME( typename F::set_noexcept<true>, ltl::function_traits<void() noexcept> );
-//SAME( typename F::set_variadic<true>, ltl::function_traits<void(...)> );
-
-//SAME( typename F::set_noexcept<true>, void() noexcept );
 SAME( typename F::set_cvref_noexcept_t<true,true,ltl::rval_ref_v,true>,
                                    void() const volatile && noexcept );
 SAME( typename F::set_signature_t<int(bool)>, int(bool) );
@@ -172,6 +169,7 @@ SAME( ltl::function_set_cvref_t<f,true,false>, fc );
 SAME( ltl::function_set_noexcept_t<f,true>, void() noexcept );
 SAME( ltl::function_set_variadic_t<f,true>, void(...) );
 SAME( ltl::function_set_return_type_t<f,int>, int() );
+SAME( ltl::function_set_signature_t<f,int(bool)>, int(bool));
 
 SAME( ltl::function_set_const<f,true>, Fc );
 SAME( ltl::function_set_volatile<f,true>, Fv );
@@ -181,37 +179,275 @@ SAME( ltl::function_set_reference<f,ltl::rval_ref_v>, Fr );
 SAME( ltl::function_set_cvref<f,true,false,ltl::lval_ref_v>, Fcl );
 SAME( ltl::function_set_cvref<f,true,false>, Fc );
 SAME( ltl::function_set_noexcept<f,true>, ltl::function_traits<void() noexcept> );
-//SAME( typename F::set_variadic<true>, ltl::function_traits<void(...)> );
-
-//SAME( typename F::set_noexcept<true>, void() noexcept );
-//SAME( typename F::set_cvref_noexcept_t<true,true,ltl::rval_ref_v,true>,
-//                                   void() const volatile && noexcept );
-//SAME( typename F::set_signature_t<int(bool)>, int(bool) );
+SAME( ltl::function_set_variadic<f,true>, ltl::function_traits<void(...)> );
+SAME( ltl::function_set_signature<f,int(bool)>, ltl::function_traits<int(bool)> );
 }
 
 namespace cmplx_func
 {
 // Test function_traits<F> member traits for more complex free func
-template <typename T> std::is_const<T> ttfn(T*,...) noexcept;
-using fnx = decltype(ttfn<void const>);
-using f = std::is_const<void const>(void const*,...);
-using Fnx = ltl::function_traits<fnx>;
-using F = ltl::function_traits<f>;
+struct R {};
+using P = void const*;
+using Q = R &&;
 
-static_assert(! typename Fnx::is_const());
-static_assert(! typename Fnx::is_volatile());
-static_assert(! typename Fnx::is_cv());
-static_assert(! typename Fnx::is_reference_lvalue());
-static_assert(! typename Fnx::is_reference_rvalue());
-static_assert(! typename Fnx::is_reference());
-static_assert(! typename Fnx::is_cvref());
-static_assert(  typename Fnx::is_noexcept());
-static_assert(  typename Fnx::is_variadic());
-SAME( typename Fnx::type, fnx );
-SAME( typename Fnx::return_type_t, std::is_const<void const> );
-SAME( typename Fnx::signature_t, f );
-SAME( typename Fnx::remove_cvref_t, fnx);
-SAME( typename Fnx::arg_types<>, ltl::arg_types<void const*> );
+using f = R(P,Q,...);
+using fc = R(P, Q, ...) const;
+using fv = R(P, Q, ...) volatile;
+using fcv = R(P, Q, ...) const volatile;
+using fl = R(P, Q, ...) &;
+using fr = R(P, Q, ...) &&;
+using fnx = R(P, Q, ...) noexcept;
+using fclnx = R(P, Q, ...) const & noexcept;
+
+static_assert(std::conjunction<
+	ltl::is_function<f>,
+	ltl::is_function<fc>,
+	ltl::is_function<fv>,
+	ltl::is_function<fcv>,
+	ltl::is_function<fl>,
+	ltl::is_function<fr>,
+	ltl::is_function<fnx>,
+	ltl::is_function<fclnx>>()
+	);
+
+static_assert(std::conjunction<
+	ltl::is_free_function<f>,
+	ltl::is_free_function<fnx>>()
+	);
+
+static_assert( ! std::disjunction<
+	ltl::is_free_function<fc>,
+	ltl::is_free_function<fv>,
+	ltl::is_free_function<fcv>,
+	ltl::is_free_function<fl>,
+	ltl::is_free_function<fr>,
+	ltl::is_free_function<fclnx>>()
+	);
+
+using F =     ltl::function_traits<R(P, Q, ...)>;
+using Fc =    ltl::function_traits<R(P, Q, ...) const>;
+using Fv =    ltl::function_traits<R(P, Q, ...) volatile>;
+using Fcv =   ltl::function_traits<R(P, Q, ...) const volatile>;
+using Fl =    ltl::function_traits<R(P, Q, ...) &>;
+using Fr =    ltl::function_traits<R(P, Q, ...) &&>;
+using Fnx =   ltl::function_traits<R(P, Q, ...) noexcept>;
+using Fclnx = ltl::function_traits<R(P, Q, ...) const & noexcept>;
+
+static_assert(
+	   !typename F::is_const()
+    && !typename F::is_volatile()
+    && !typename F::is_cv()
+    && !typename F::is_reference_lvalue()
+    && !typename F::is_reference_rvalue()
+    && !typename F::is_reference()
+    && !typename F::is_cvref()
+    && !typename F::is_noexcept()
+    &&  typename F::is_variadic()
+	);
+static_assert(
+	    typename Fc::is_const()
+	&& !typename Fc::is_volatile()
+	&&  typename Fc::is_cv()
+	&& !typename Fc::is_reference_lvalue()
+	&& !typename Fc::is_reference_rvalue()
+	&& !typename Fc::is_reference()
+	&&  typename Fc::is_cvref()
+	&& !typename Fc::is_noexcept()
+	&&  typename Fc::is_variadic()
+	);
+static_assert(
+	   !typename Fv::is_const()
+	&&  typename Fv::is_volatile()
+	&&  typename Fv::is_cv()
+	&& !typename Fv::is_reference_lvalue()
+	&& !typename Fv::is_reference_rvalue()
+	&& !typename Fv::is_reference()
+	&&  typename Fv::is_cvref()
+	&& !typename Fv::is_noexcept()
+	&&  typename Fv::is_variadic()
+	);
+static_assert(
+	    typename Fcv::is_const()
+	&&  typename Fcv::is_volatile()
+	&&  typename Fcv::is_cv()
+	&& !typename Fcv::is_reference_lvalue()
+	&& !typename Fcv::is_reference_rvalue()
+	&& !typename Fcv::is_reference()
+	&&  typename Fcv::is_cvref()
+	&& !typename Fcv::is_noexcept()
+	&&  typename Fcv::is_variadic()
+	);
+static_assert(
+	   !typename Fl::is_const()
+	&& !typename Fl::is_volatile()
+	&& !typename Fl::is_cv()
+	&&  typename Fl::is_reference_lvalue()
+	&& !typename Fl::is_reference_rvalue()
+	&&  typename Fl::is_reference()
+	&&  typename Fl::is_cvref()
+	&& !typename Fl::is_noexcept()
+	&&  typename Fl::is_variadic()
+	);
+static_assert(
+	   !typename Fr::is_const()
+	&& !typename Fr::is_volatile()
+	&& !typename Fr::is_cv()
+	&& !typename Fr::is_reference_lvalue()
+	&&  typename Fr::is_reference_rvalue()
+	&&  typename Fr::is_reference()
+	&&  typename Fr::is_cvref()
+	&& !typename Fr::is_noexcept()
+	&&  typename Fr::is_variadic()
+	);
+static_assert(
+	    typename Fclnx::is_const()
+	&& !typename Fclnx::is_volatile()
+	&&  typename Fclnx::is_cv()
+	&&  typename Fclnx::is_reference_lvalue()
+	&& !typename Fclnx::is_reference_rvalue()
+	&&  typename Fclnx::is_reference()
+	&&  typename Fclnx::is_cvref()
+	&&  typename Fclnx::is_noexcept()
+	&&  typename Fclnx::is_variadic()
+	);
+
+
+static_assert(
+	   !ltl::function_is_const<f>()
+	&& !ltl::function_is_volatile<f>()
+	&& !ltl::function_is_cv<f>()
+	&& !ltl::function_is_reference_lvalue<f>()
+	&& !ltl::function_is_reference_rvalue<f>()
+	&& !ltl::function_is_reference<f>()
+	&& !ltl::function_is_cvref<f>()
+	&& !ltl::function_is_noexcept<f>()
+	&&  ltl::function_is_variadic<f>()
+	);
+static_assert(
+	    ltl::function_is_const<fc>()
+	&& !ltl::function_is_volatile<fc>()
+	&&  ltl::function_is_cv<fc>()
+	&& !ltl::function_is_reference_lvalue<fc>()
+	&& !ltl::function_is_reference_rvalue<fc>()
+	&& !ltl::function_is_reference<fc>()
+	&&  ltl::function_is_cvref<fc>()
+	&& !ltl::function_is_noexcept<fc>()
+	&&  ltl::function_is_variadic<fc>()
+	);
+static_assert(
+   	   !ltl::function_is_const<fv>()
+	&&  ltl::function_is_volatile<fv>()
+	&&  ltl::function_is_cv<fv>()
+	&& !ltl::function_is_reference_lvalue<fv>()
+	&& !ltl::function_is_reference_rvalue<fv>()
+	&& !ltl::function_is_reference<fv>()
+	&&  ltl::function_is_cvref<fv>()
+	&& !ltl::function_is_noexcept<fv>()
+	&&  ltl::function_is_variadic<fv>()
+	);
+static_assert(
+	    ltl::function_is_const<fcv>()
+	&&  ltl::function_is_volatile<fcv>()
+	&&  ltl::function_is_cv<fcv>()
+	&& !ltl::function_is_reference_lvalue<fcv>()
+	&& !ltl::function_is_reference_rvalue<fcv>()
+	&& !ltl::function_is_reference<fcv>()
+	&&  ltl::function_is_cvref<fcv>()
+	&& !ltl::function_is_noexcept<fcv>()
+	&&  ltl::function_is_variadic<fcv>()
+	);
+static_assert(
+	   !ltl::function_is_const<fl>()
+	&& !ltl::function_is_volatile<fl>()
+	&& !ltl::function_is_cv<fl>()
+	&&  ltl::function_is_reference_lvalue<fl>()
+	&& !ltl::function_is_reference_rvalue<fl>()
+	&&  ltl::function_is_reference<fl>()
+	&&  ltl::function_is_cvref<fl>()
+	&& !ltl::function_is_noexcept<fl>()
+	&&  ltl::function_is_variadic<fl>()
+	);
+static_assert(
+	   !ltl::function_is_const<fr>()
+	&& !ltl::function_is_volatile<fr>()
+	&& !ltl::function_is_cv<fr>()
+	&& !ltl::function_is_reference_lvalue<fr>()
+	&&  ltl::function_is_reference_rvalue<fr>()
+	&&  ltl::function_is_reference<fr>()
+	&&  ltl::function_is_cvref<fr>()
+	&& !ltl::function_is_noexcept<fr>()
+	&&  ltl::function_is_variadic<fr>()
+	);
+static_assert(
+	    ltl::function_is_const<fclnx>()
+	&& !ltl::function_is_volatile<fclnx>()
+	&&  ltl::function_is_cv<fclnx>()
+	&&  ltl::function_is_reference_lvalue<fclnx>()
+	&& !ltl::function_is_reference_rvalue<fclnx>()
+	&&  ltl::function_is_reference<fclnx>()
+	&&  ltl::function_is_cvref<fclnx>()
+	&&  ltl::function_is_noexcept<fclnx>()
+	&&  ltl::function_is_variadic<fclnx>()
+	);
+
+SAME(typename F::type, f);
+SAME(typename F::return_type_t, R);
+SAME(typename F::signature_t, f);
+SAME(typename F::remove_cvref_t, f);
+SAME(typename F::arg_types<>, ltl::arg_types<P,Q>);
+
+SAME(typename F::set_const_t<true>, fc);
+SAME(typename F::set_volatile_t<true>, fv);
+SAME(typename F::set_cv_t<true, true>, fcv);
+SAME(typename F::set_reference_t<ltl::lval_ref_v>, fl);
+SAME(typename F::set_reference_t<ltl::rval_ref_v>, fr);
+SAME(typename F::set_cvref_t<true, false, ltl::lval_ref_v>, R(P,Q,...)const&);
+SAME(typename F::set_cvref_t<true, false>, fc);
+SAME(typename F::set_noexcept_t<true>, fnx);
+SAME(typename F::set_variadic_t<false>, R(P,Q));
+SAME(typename F::set_return_type_t<int>, int(P,Q,...));
+
+SAME(typename F::set_cvref_noexcept_t<true, true, ltl::rval_ref_v, true>,
+	R(P, Q, ...) const volatile && noexcept);
+SAME(typename Fclnx::set_signature_t<int(bool)>, int(bool) const & noexcept);
+
+SAME(typename F::set_const<true>, Fc);
+SAME(typename F::set_volatile<true>, Fv);
+SAME(typename F::set_cv<true, true>, Fcv);
+SAME(typename F::set_reference<ltl::lval_ref_v>, Fl);
+SAME(typename F::set_reference<ltl::rval_ref_v>, Fr);
+SAME(typename F::set_cvref<false, false, ltl::lval_ref_v>, Fl);
+SAME(typename F::set_cvref<true, false>, Fc);
+SAME(typename F::set_noexcept<true>, Fnx);
+
+// Test function traits for simple func F=void()
+SAME(ltl::function_return_type_t<f>, R);
+SAME(ltl::function_signature_t<f>, f);
+SAME(ltl::function_remove_cvref_t<f>, f);
+SAME(ltl::function_arg_types<f>, ltl::arg_types<P,Q>);
+
+SAME(ltl::function_set_const_t<f, true>, fc);
+SAME(ltl::function_set_volatile_t<f, true>, fv);
+SAME(ltl::function_set_cv_t<f, true, true>, fcv);
+SAME(ltl::function_set_reference_t<f, ltl::lval_ref_v>, fl);
+SAME(ltl::function_set_reference_t<f, ltl::rval_ref_v>, fr);
+SAME(ltl::function_set_cvref_t<f, true, false, ltl::lval_ref_v>, ltl::function_remove_noexcept_t<fclnx>);
+SAME(ltl::function_set_cvref_t<f, true, false>, fc);
+SAME(ltl::function_set_noexcept_t<f, true>, fnx);
+SAME(ltl::function_set_variadic_t<f, false>, R(P,Q));
+SAME(ltl::function_set_return_type_t<f, int>, int(P,Q,...));
+SAME(ltl::function_set_signature_t<fclnx, int(bool)>, int(bool) const & noexcept);
+
+SAME(ltl::function_set_const<f, true>, Fc);
+SAME(ltl::function_set_volatile<f, true>, Fv);
+SAME(ltl::function_set_cv<f, true, true>, Fcv);
+SAME(ltl::function_set_reference<f, ltl::lval_ref_v>, Fl);
+SAME(ltl::function_set_reference<f, ltl::rval_ref_v>, Fr);
+SAME(ltl::function_set_cvref<f, true, false, ltl::lval_ref_v>, ltl::function_remove_noexcept<fclnx>);
+SAME(ltl::function_set_cvref<f, true, false>, Fc);
+SAME(ltl::function_set_variadic<f, false>, ltl::function_traits<R(P, Q)>);
+SAME(ltl::function_set_return_type<f, int>, ltl::function_traits<int(P, Q, ...)>);
+SAME(ltl::function_set_signature<fclnx, int(bool)>, ltl::function_traits<int(bool) const & noexcept>);
 }
 
 

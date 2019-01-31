@@ -44,3 +44,10 @@ build_script:
 
 test_script:
   - cmd: ninja -C build test
+
+only_commits:
+  files:
+    - .appveyor.yml
+    - meson.build
+    - function_traits.hpp
+    - test/

@@ -638,11 +638,10 @@ using function_remove_noexcept_t = function_set_noexcept_t<F, false>;
 
 // set_variadic, add_variadic / remove_variadic
 template <typename F, bool A>
-using function_set_variadic =
-    typename function_traits<F>::template set_variadic<A>;
-template <typename F, bool A>
 using function_set_variadic_t =
     typename function_traits<F>::template set_variadic_t<A>;
+template <typename F, bool A>
+using function_set_variadic = function_traits<function_set_variadic_t<F,A>>;
 
 template <typename F>
 using function_add_variadic = function_set_variadic<F, true>;

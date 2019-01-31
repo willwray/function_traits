@@ -4,7 +4,7 @@
 
 Complete reflection of C++ function types  and modification of their properties.
 
-**Anatomy** - of a general C++17 function type:
+**Anatomy** of a general C++17 function type:
 
 ```c++
 template <typename R, typename... P, bool X>
@@ -17,13 +17,13 @@ function = R(P...[,...]) [const] [volatile] [&|&&] noexcept(X);
 >'`A`|`B`' for `A` or `B` alternatives - '[`C`]' for optional `C` term:
 
 ```c++
-                                                                /*
-            _signature_    ________cvref________    noexcept_    *
-           |           |  |                     |  |         |   */
-function = R(P...[,...]) [const] [volatile] [&|&&] noexcept(X); /*
-                  |  |    |____   _______|   |  |                *
-                variadic       cv          reference             *
-                                        lvalue | rvalue          */
+                                                                  /*
+            _signature_    ________cvref________    noexcept_      *
+           |           |  |                     |  |         |     */
+function = R(P...[,...]) [const] [volatile] [&|&&] noexcept(X);   /*
+                  |  |    |____   _______|   |  |                  *
+                variadic       cv          reference               *
+                                        lvalue | rvalue            */
 ```
 
 Function **signature** (all API terms in **bold**):
@@ -551,6 +551,17 @@ template int logger(decltype(&LogV::log),int);
 
 ----
 
-| Travis gcc8, clang7<br>-std=c++17 | Appveyor MSVC |
+## Build
+
+Meson build script provided, e.g. use with ninja backend
+
+```bash
+meson build
+ninja -C build
+ninja -C build test
+```
+
+| Linux Travis| Windows Appveyor|
 | :---: | :---: |
+|gcc-8, clang-7<br>-std=c++17|MSVC 15.9.4<br>/std:c++latest|
 | [![Build Status](https://travis-ci.org/willwray/function_traits.svg?branch=master)](https://travis-ci.org/willwray/function_traits) | [![Build status](https://ci.appveyor.com/api/projects/status/yxe3sawukwt5oqan?svg=true)](https://ci.appveyor.com/project/willwray/function-traits) |

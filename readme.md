@@ -4,15 +4,15 @@
 
 Complete reflection of C++ function types  and modification of their properties.
 
-**Anatomy** of a general C++17 function type:
+**Anatomy**: of a general C++17 function type:
 
 ```c++
 template <typename R, typename... P, bool X>
 using
-  function = R(P...[,...]) [const] [volatile] [&|&&] noexcept(X);
+function = R(P...[,...]) [const] [volatile] [&|&&] noexcept(X);
 ```
 
-<details><summary><b>Dissected</b><br> - a breakdown of the general type, with library API terminology</summary>
+<details><summary><b>Dissected</b>: a breakdown of the general type, with library API terminology</summary>
 
 >'`A`|`B`' for `A` or `B` alternatives - '[`C`]' for optional `C` term:
 
@@ -91,7 +91,9 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 ```
 
-(Also at [boost.org](http://www.boost.org/LICENSE_1_0.txt) and accompanying file [LICENSE_1_0.txt](LICENSE_1_0.txt))
+[![License](https://img.shields.io/badge/license-boost%201.0-blue.svg)](https://www.boost.org/LICENSE_1_0.txt)
+
+Also at [boost.org](http://www.boost.org/LICENSE_1_0.txt) and accompanying file [LICENSE_1_0.txt](LICENSE_1_0.txt)
 
 </details>
 
@@ -545,3 +547,9 @@ template int logger(decltype(&LogV::log),int);
 ```
 
 </details>
+
+----
+
+| Travis gcc8, clang7<br>-std=c++17 | Appveyor MSVC |
+| :---: | :---: |
+| [![Build Status](https://travis-ci.org/willwray/function_traits.svg?branch=master)](https://travis-ci.org/willwray/function_traits) | [![Build status](https://ci.appveyor.com/api/projects/status/yxe3sawukwt5oqan?svg=true)](https://ci.appveyor.com/project/willwray/function-traits) |

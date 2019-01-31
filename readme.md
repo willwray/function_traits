@@ -4,7 +4,7 @@
 
 Complete reflection of C++ function types  and modification of their properties.
 
-**Anatomy**: of a general C++17 function type:
+**Anatomy** - of a general C++17 function type:
 
 ```c++
 template <typename R, typename... P, bool X>
@@ -12,17 +12,18 @@ using
 function = R(P...[,...]) [const] [volatile] [&|&&] noexcept(X);
 ```
 
-<details><summary><b>Dissected</b>: a breakdown of the general type, with library API terminology</summary>
+<details><summary><b>Dissected</b> - a breakdown of the general type, with library API terminology</summary>
 
 >'`A`|`B`' for `A` or `B` alternatives - '[`C`]' for optional `C` term:
 
 ```c++
-//            _signature_    ________cvref________    noexcept_
-//           |           |  |                     |  |         |
-  function = R(P...[,...]) [const] [volatile] [&|&&] noexcept(X);
-//                  |  |    |____   _______|   |  |
-//                variadic       cv          reference
-//                                        lvalue | rvalue
+                                                                /*
+            _signature_    ________cvref________    noexcept_    *
+           |           |  |                     |  |         |   */
+function = R(P...[,...]) [const] [volatile] [&|&&] noexcept(X); /*
+                  |  |    |____   _______|   |  |                *
+                variadic       cv          reference             *
+                                        lvalue | rvalue          */
 ```
 
 Function **signature** (all API terms in **bold**):

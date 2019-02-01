@@ -61,6 +61,25 @@ static_assert( ! ltl::is_free_function_v<int() const> );
 static_assert( ltl::is_free_function_v<int()> );
 static_assert( ltl::is_free_function_v<void() noexcept(true)> );
 
+// Bad definition gives compile error for non-function type Arg:
+template <typename T>
+inline constexpr bool bad_is_free_function_v
+          = ltl::is_function_v<T> && !ltl::function_is_cvref_v<T>;
+
+static_assert( bad_is_free_function_v<void()> );
+static_assert( ! bad_is_free_function_v<void() const> );
+// Compile error for non-function type Arg:
+//static_assert( ! bad_is_free_function_v<void> );
+
+template <typename T>
+inline constexpr bool good_is_free_function_v
+          = std::conjunction_v< ltl::is_function<T>,
+               std::negation<ltl::is_function_cvref<T>>>;
+
+static_assert( good_is_free_function_v<void()> );
+static_assert( ! good_is_free_function_v<void() const> );
+static_assert( ! good_is_free_function_v<void> );
+
 // The 'is_function_*' predicate traits are defined for all types so
 // these 'lazy' traits gives no error for non-function type
 using ifr = ltl::is_function_reference<int>;

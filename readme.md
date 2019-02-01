@@ -28,9 +28,9 @@ function = R(P...[,...]) [const] [volatile] [&|&&] noexcept(X);   /*
 
 Function **signature** (all API terms in **bold**):
 
-* **`R(P...)`**|**`R(P...,...)`** : **signature** = **return** type `R` and **arg** types `P...`
+* **`R(P...)`**|**`R(P...,...)`** : **signature** = **return_type** `R` and **arg_types** `P...`
 
->Here, '**signature**' refers to **return** type `R` and **arg** (parameter) types `P...`  
+>Here, '**signature**' refers to **return_type** `R` and **arg_types** (parameter) `P...`  
 including any C-style varargs (termed '**variadic**', denoted by trailing ellipsis **`...`**)  
 excluding everything after the function parens (i.e. no cvref or exception spec).
 

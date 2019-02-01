@@ -18,7 +18,7 @@
      - Function signature:  R(P...) or R(P..., ...)
          - Return type      R
          - Parameter types    P...
-         - Presence of variadic parameter pack ...
+         - Presence of variadic parameter pack ... 'varargs'
            ...C-style trailing elipsis: 2 combinations
 
      - Function cvref qualifiers       12 combinations total:
@@ -30,47 +30,74 @@
 
    Function 'signature' here refers to return type R and parameters P...
    (with optional C-style varargs but without qualifiers and noexcept).
-   A function trait is provided to extract just the function signature:
+   The function_signature trait extracts just this R(P...[,...]) part:
 
      function_signature_t<F> // type alias yielding a function type =
-                       // F with cvref qualifiers and noexcept removed
+                             // F with cvref quals and noexcept removed
      function_signature<F>   // class with public type alias member
                              //   type = function_signature_t<F>
+   Other 'signature' traits:
 
-   Traits prefixed with 'function_' like this are only well defined for
-   function types - evaluating with non-function type Arg is an error.
+     function_return_type<F> // class with member type alias for R
+     function_arg_types<F>   // a typelist of F's arg types P...
 
-     function_signature<F> // removes cvref qualifiers and noexcept
-
-
-   This library follows std trait conventions:
+   This library follows std trait conventions as appropriate:
 
      '_t' suffix for result type   (the trait is a type alias template)
      '_v' suffix for result value  (the trait is a variable template)
-      no suffix for a result class (the trait is a class template
+     no suffix for a result class (the trait is a class template
                                     with 'type' or 'value' member)
 
-   'Free' function types are function types without cvref qualifiers
-   (they are valid types for free functions
-   A 'top level' predicate trait is provided to test this:
+ ** All traits prefixed with 'function_' are *only* well defined for  **
+ ** function types; instantiating with non-function type is an error. **
 
-     is_free_function<T>  // class inherited from std::bool_constant<?>
-     is_free_function_v<T>  // class inherited from std::bool_constant<?>
+ Predicate traits
+ ================
+   Two 'top level' predicates classify function types among all types
 
-   Function types with cvref qualifiers are 'abominable' (see doc refs).
-   To test if function type F is cvref qualified use predicate trait:
+     is_function<T>       // ltl:: equivalent of std::is_function
+     is_free_function<T>  // Is T a valid type for a free function?
 
-     is_function_cvref<F> // class inherited from std::bool_constant<?>
-     function_is_cvref<F>   // std::bool_constant<Q> where Q is...
-     function_is_cvref_v<F> // true if any c,v or ref qualifier present
+   These traits always evaluate true or false (for the _v variant;
+   the trait class inherits from std::true_type | std::false_type).
 
-   To test if a type T is a function type that is not cvref qualified:
+   * 'Free' function types are function types without cvref qualifiers.
+   * Function types with cvref qualifiers are 'abominable' - see docs.
 
-     is_free_function_v<T> // is_function_v<T> && !function_is_cvref<T>
+   Nine function_trait predicates test for; const, volatile, cv, cvref,
+   reference, reference_lvalue, reference_rvalue, noexcept and variadic.
 
-   This is the only function_trait that is defined for any type.  
-   All other function_* traits are defined only for function types.
+   There are two versions:
+                is_function_*<T> // empty class for non-function type T
+                function_is_*<F> // compile error for non-function type
+   I.e.:
+   The function_is_*<F> traits are for Fs known to be of function type.
 
+   The is_function_*<T> traits are 'SFINAE-friendly' predicates that
+    - inherit from std::bool_constant<*> for function type T or
+    - inherit from an empty class for non-function type T
+   (there is no 'is_function_*_v' variant - use 'function_is_*_v').
+
+   For example, here are bad and good definitions of is_free_function_v:
+
+    template <typename T>
+    inline constexpr bool is_free_function_v
+
+    (1) = ltl::is_function_v<T> && !ltl::function_is_cvref_v<T>; // BAD
+
+    (2) = std::conjunction_v< ltl::is_function<T>,           // CORRECT
+                std::negation<ltl::is_function_cvref<T>> >;
+
+    (3) = [] { if constexpr (ltl::is_function_v<T>)     // ALSO CORRECT
+                  return !ltl::function_is_cvref_v<T>;
+               return false; }();
+
+   Instantiation of function_is_cvref<T> fails for non-function type T
+   so it must be 'guarded' e.g. by logic traits (2) or constexpr-if (3)
+   (note - ltl::is_function avoids redundant work of std::is_function).
+
+ Modifying traits
+ ================
    Conventional 'add' and 'remove' traits modify their named trait:
 
      function_add_noexcept_t<F> // add noexcept specifier
@@ -90,14 +117,14 @@
      - lval_ref_v    lvalue reference qualifier: &
      - rval_ref_v    rvalue reference qualifier: &&
 
-   Addition of ref_qual values gives the same reference collapsed
-   result as compounding references on ordinary object types.
-   Variable template reference_v<T> returns the reference type of T:
+   Addition of ref_qual values gives the same reference-collapsed result
+   as compounding references on ordinary object types.
 
-     reference_v<T> -> ref_qual  // defined for all types
+   A pair of variable templates give the reference type of T or F:
 
-   For function types is gives the function type reference qualifier.
-   For other types it gives the ordinary reference qualifier.
+     reference_v<T>          // ordinary type top-level ref_qual value
+     function_reference_v<F> // function type ref_qual value
+
    The 'set_reference' traits then allow to copy between function types:
 
      // copy the reference qualifiers from G to F (with no collapse)
@@ -109,11 +136,10 @@
      function_set_reference<F, null_ref_v>   // set ref qual to none
      function_remove_reference<F>            // set ref qual to none
 
-     function_add_reference<F, rval_ref_v>   // does reference collapse!
+     function_add_reference<F, rval_ref_v>   // does reference collapse
                                              // (so F& + && = F&)
 
-   Copying all cvref qualifiers is verbose with 'set_cvref' so this is
-   provided as a 'set_cvref_as' trait:
+   A trait is provided to copy all cvref qualifiers, otherwise verbose:
 
      function_set_cvref_as_t<F,G> // copy cvref quals of G to F
 */
@@ -289,10 +315,11 @@ class function_base<R(P...__VA_ARGS__)>                                \
       }\
     }\
   }\
-  template <bool c, bool v, ref_qual r, bool nx>                             \
+  template <bool c, bool v, ref_qual r, bool nx>\
   using set_cvref_noexcept_t = typename decltype(\
         set_cvref_noexcept<c,v,r,nx>())::type;\
-}
+} // Macro end ////////////////////////////////////////////////////////////////
+
 FUNCTION_BASE(,);
 FUNCTION_BASE(,,...); // leading comma forwarded via macro varargs
 #undef FUNCTION_BASE
@@ -504,9 +531,9 @@ namespace impl
 template <typename T>
 constexpr bool is_free_function()
 {
-	if constexpr (is_function_v<T>)
-		return !function_is_cvref_v<T>;
-	return false;
+  if constexpr (is_function_v<T>)
+    return !function_is_cvref_v<T>;
+  return false;
 }
 } // namespace impl
 

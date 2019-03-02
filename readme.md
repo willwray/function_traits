@@ -473,7 +473,7 @@ Setters for function cv qualifiers, noexcept and variadic take `bool` arguments:
 
 ```c++
     static_assert(
-       std::is_same_v< function_set_reference_t<void() &, rval_ref_v>
+       std::is_same_v< function_set_reference_t<void() &, rval_ref_v>,
                                                 void() && >
     );
 ```
@@ -483,7 +483,7 @@ If you need it, `function_add_reference<F,R>` does reference collapse
 
 ```c++
     static_assert(
-       std::is_same_v< function_add_reference_t<void() &, rval_ref_v>
+       std::is_same_v< function_add_reference_t<void() &, rval_ref_v>,
                                                 void() & >
     );
 ```

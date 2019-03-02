@@ -429,7 +429,7 @@ constexpr auto pred_base()
   } else {
     return empty_base{};
   }
-};
+}
 
 template <template <typename> typename P, typename F>
 using predicate_base = decltype(pred_base<P,F>());

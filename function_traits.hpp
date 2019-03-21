@@ -144,6 +144,11 @@
      function_set_cvref_as_t<F,G> // copy cvref quals of G to F
 */
 
+#if !defined(__cpp_noexcept_function_type)
+#error function_traits requires c++17 support for noexcept function types \
+(MSVC: /Zc:noexceptTypes- must not be used)
+#endif
+
 // GCC and Clang deduce noexcept via partial specialization
 // MSVC doesn't deduce yet (early 2019 V 15.9.4 Preview 1.0)
 #if defined(__GNUC__)

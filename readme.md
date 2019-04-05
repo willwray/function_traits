@@ -21,9 +21,9 @@ function = R(P...[,...]) [const] [volatile] [&|&&] noexcept(X);
             _signature_    ________cvref________    noexcept_      *
            |           |  |                     |  |         |     */
 function = R(P...[,...]) [const] [volatile] [&|&&] noexcept(X);   /*
-                  |  |    |____   _______|   |  |                  *
-                variadic       cv          reference               *
-                                        lvalue | rvalue            */
+           | |__| |__|    |_____  _______|   |  |                  *
+ return_type |  variadic        cv         reference               *
+         arg_types                      lvalue | rvalue            */
 ```
 
 Function **signature** (all API terms in **bold**):
